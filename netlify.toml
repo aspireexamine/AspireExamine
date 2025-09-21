@@ -1,0 +1,41 @@
+[build]
+  # Directory to change to before starting a build
+  base = "."
+  
+  # Directory that contains the deploy-ready HTML files and assets
+  publish = "dist"
+  
+  # Default build command
+  command = "npm run build:netlify"
+
+[build.environment]
+  # Node.js version (updated to fix engine warnings)
+  NODE_VERSION = "20"
+  
+  # NPM version
+  NPM_VERSION = "10"
+  
+  # Configure secrets scanning
+  SECRETS_SCAN_ENABLED = "true"
+  SECRETS_SCAN_OMIT_PATHS = "dist/*,node_modules/*"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_PY_TRANSCRIPT_URL"
+
+# Redirect rules for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
