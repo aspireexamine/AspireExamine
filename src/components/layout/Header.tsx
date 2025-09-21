@@ -99,8 +99,15 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
-                    <AvatarImage src={user.avatar || ''} alt={user.name} className="object-cover rounded-full border-2 border-white dark:border-black" />
-                    <AvatarFallback>
+                    <AvatarImage 
+                      src={user.avatar || ''} 
+                      alt={user.name} 
+                      className="object-cover rounded-full border-2 border-white dark:border-black"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
                       {user.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

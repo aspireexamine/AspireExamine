@@ -68,7 +68,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ profile, onSave, onCa
           <div className="flex flex-col items-center gap-4">
             <div
               className="h-24 w-24 rounded-full bg-cover bg-center bg-no-repeat ring-4 ring-primary/20 cursor-pointer"
-              style={{ backgroundImage: `url(${profilePictureUrl || 'https://placehold.co/96x96/6366f1/ffffff?text=User'})` }}
+              style={{ 
+                backgroundImage: `url(${profilePictureUrl || 'https://placehold.co/96x96/6366f1/ffffff?text=User'})`,
+                backgroundColor: '#f3f4f6'
+              }}
               onClick={() => fileInputRef.current?.click()}
             />
             <Input
@@ -210,13 +213,13 @@ export function ProfilePage({ user, recentTests, allPapers, onProfileUpdate }: P
         variant: 'destructive',
       });
     } else {
-      console.log('Updated profile data:', data);
       toast({
         title: 'Success',
         description: 'Profile updated successfully!',
       });
       setIsEditing(false);
-      onProfileUpdate(); // Re-fetch in App.tsx to display updated data globally
+      // Call onProfileUpdate to refresh the user data in the parent component
+      onProfileUpdate();
     }
     setLoading(false);
   };
@@ -242,7 +245,13 @@ export function ProfilePage({ user, recentTests, allPapers, onProfileUpdate }: P
               <div className="flex items-center gap-4">
                 <div
                   className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 rounded-full bg-cover bg-center bg-no-repeat ring-4 ring-primary/20"
-                  style={{ backgroundImage: `url(${user.avatar || 'https://placehold.co/128x128/6366f1/ffffff?text=User'})` }}
+                  style={{ 
+                    backgroundImage: `url(${user.avatar || 'https://placehold.co/128x128/6366f1/ffffff?text=User'})`,
+                    backgroundColor: '#f3f4f6'
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.backgroundImage = 'url(https://placehold.co/128x128/6366f1/ffffff?text=User)';
+                  }}
                 />
                 <div>
                   <h2 className="text-lg sm:text-2xl font-bold">{user.name}</h2>

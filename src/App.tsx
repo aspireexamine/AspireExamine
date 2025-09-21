@@ -212,12 +212,14 @@ const AppContent = () => {
       let user: User;
 
       if (profile) {
+        const avatarUrl = profile.profile_picture ? `${profile.profile_picture}?t=${Date.now()}` : `https://i.pravatar.cc/150?u=${session.user.id}`;
+        
         user = {
           id: session.user.id,
           email: session.user.email!,
           role: (profile.role as 'student' | 'admin') || 'student',
           name: profile.full_name || session.user.email || 'New User',
-          avatar: profile.profile_picture || `https://i.pravatar.cc/150?u=${session.user.id}`,
+          avatar: avatarUrl,
           contact_number: profile.contact_number || undefined,
           date_of_birth: profile.date_of_birth || undefined,
           address: profile.address || undefined,
@@ -226,22 +228,33 @@ const AppContent = () => {
         // Create a profile if it doesn't exist
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert({ id: session.user.id, role: 'student', full_name: session.user.email })
+          .insert({ 
+            id: session.user.id, 
+            role: 'student', 
+            full_name: session.user.user_metadata?.full_name || session.user.email || 'New User'
+          })
           .select()
           .single();
 
         if (insertError) {
           console.error('Error creating profile:', insertError);
-          await supabase.auth.signOut();
-          return;
+          // Don't sign out, just create a temporary user object
+          user = {
+            id: session.user.id,
+            email: session.user.email!,
+            role: 'student',
+            name: session.user.user_metadata?.full_name || session.user.email || 'New User',
+            avatar: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.id}`,
+          };
+        } else {
+          user = {
+            id: session.user.id,
+            email: session.user.email!,
+            role: (newProfile.role as 'student' | 'admin') || 'student',
+            name: newProfile.full_name || session.user.email || 'New User',
+            avatar: newProfile.profile_picture ? `${newProfile.profile_picture}?t=${Date.now()}` : `https://i.pravatar.cc/150?u=${session.user.id}`,
+          };
         }
-        user = {
-          id: session.user.id,
-          email: session.user.email!,
-          role: (newProfile.role as 'student' | 'admin') || 'student',
-          name: newProfile.full_name || session.user.email || 'New User',
-          avatar: newProfile.profile_picture || `https://i.pravatar.cc/150?u=${session.user.id}`,
-        };
       }
 
       setCurrentUser(user);
@@ -260,13 +273,21 @@ const AppContent = () => {
       if (lastAuthEvent === 'TOKEN_REFRESHED' || lastAuthEvent === 'USER_UPDATED') return;
 
       if (!hasBootstrapped) setLoading(true);
+      
       if (session?.user) {
         const user = await fetchUserProfile();
         if (user) {
+          setCurrentUser(user);
+          
           const currentPath = window.location.pathname;
+          
+          // Redirect to appropriate dashboard
           if (currentPath === '/' || currentPath === '/login') {
-            navigate(user.role === 'admin' ? '/admin' : '/student');
+            const targetPath = user.role === 'admin' ? '/admin' : '/student';
+            navigate(targetPath);
           }
+        } else {
+          setCurrentUser(null);
         }
       } else {
         setCurrentUser(null);
@@ -275,6 +296,7 @@ const AppContent = () => {
           navigate('/login');
         }
       }
+      
       setLoading(false);
       if (!hasBootstrapped) setHasBootstrapped(true);
     };
