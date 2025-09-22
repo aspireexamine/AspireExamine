@@ -28,7 +28,7 @@ const menuItems = [
   { id: 'papers', label: 'Papers', icon: FileText },
   { id: 'questions', label: 'Questions', icon: PlusCircle },
   { id: 'import', label: 'Bulk Import', icon: Upload },
-  { id: 'notebooks', label: 'Notebook Manager', icon: Notebook },
+  { id: 'notebooks', label: 'Library Manager', icon: Notebook },
   { id: 'tests', label: 'Test Manager', icon: TestTube },
   { id: 'ai-tools', label: 'AI Tools', icon: Brain },
   { id: 'users', label: 'Users', icon: Users },

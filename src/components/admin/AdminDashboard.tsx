@@ -15,7 +15,6 @@ import { UsersManagement } from './UsersManagement';
 import { Analytics } from './Analytics';
 import { SettingsPanel as AdminSettingsPanel } from './SettingsPanel';
 import { ProfilePage } from '../student/ProfilePage';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Toaster } from '@/components/ui/sonner';
 import { AnalyticsData, Stream, User, NotebookFolder, Question } from '@/types';
 import { 
@@ -23,7 +22,6 @@ import {
   FileText, 
   TrendingUp, 
   Target,
-  Menu,
   LayoutDashboard,
 } from 'lucide-react';
 
@@ -73,7 +71,6 @@ export function AdminDashboard({ streams, user, setStreams, onUpdateUser, notebo
       navigate(`/admin/${section}`);
     }
   };
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
 
   const viewTitles: { [key: string]: string } = {
@@ -81,7 +78,7 @@ export function AdminDashboard({ streams, user, setStreams, onUpdateUser, notebo
     streams: 'Streams Management',
     papers: 'Papers Management',
     questions: 'Questions Management',
-    notebooks: 'Notebooks',
+    notebooks: 'Library',
     tests: 'Test Manager',
     import: 'Bulk Import',
     'ai-tools': 'AI Tools',
@@ -232,22 +229,6 @@ export function AdminDashboard({ streams, user, setStreams, onUpdateUser, notebo
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="lg:hidden">
-                <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Menu className="h-6 w-6" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-auto">
-                    <AdminSidebar 
-                      isMobile={true} 
-                      currentSection={currentView} 
-                      onSectionChange={(view) => { setCurrentView(view); setIsMobileSidebarOpen(false); }} 
-                      onClose={() => setIsMobileSidebarOpen(false)} />
-                  </SheetContent>
-                </Sheet>
-              </div>
               <h2 className="text-2xl font-bold tracking-tight">{viewTitles[currentView] || 'Dashboard'}</h2>
             </div>
           </div>

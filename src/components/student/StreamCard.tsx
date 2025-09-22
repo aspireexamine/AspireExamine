@@ -53,7 +53,7 @@ export function StreamCard({ stream, onClick, subjectsClassName }: StreamCardPro
             </CardHeader>
           </div>
           <CardContent className="p-0 pt-1">
-            <div className={`flex flex-wrap gap-2 ${subjectsClassName || ''}`}>
+            <div className={`hidden sm:flex flex-wrap gap-2 ${subjectsClassName || ''}`}>
               {stream.subjects.map((subject) => (
                 <Badge key={subject.id} variant={'secondary'}>
                   {subject.name}

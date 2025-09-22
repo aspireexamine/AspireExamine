@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Header as DashboardHeader } from '@/components/layout/Header';
 import { StudentDashboard, ViewState } from '@/components/student/StudentDashboard';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -9,6 +9,7 @@ import { User, Stream, NotebookFolder, Result } from '@/types';
 import { getAdminDashboardData, getNotebookFoldersWithNotebooks } from '@/lib/supabaseQueries';
 import { STREAMS, SAMPLE_RESULTS } from '@/utils/constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { getCartoonAvatar } from '@/utils/avatarUtils';
 import { LandingPage } from './components/landing/LandingPage';
 import { LoginPage } from './LoginPage';
 import Squares from '@/components/Squares';
@@ -22,6 +23,21 @@ const AppContent = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [studentView, setStudentView] = useState<ViewState>(() => {
     try {
+      // Check URL parameters first
+      if (window.location.pathname === '/student') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const practiceSectionId = urlParams.get('practiceSectionId');
+        const streamId = urlParams.get('streamId');
+        const subjectId = urlParams.get('subjectId');
+        const chapterId = urlParams.get('chapterId');
+        
+        if (practiceSectionId) return 'practiceSection';
+        if (chapterId) return 'papers';
+        if (subjectId) return 'subjects';
+        if (streamId) return 'subjects';
+      }
+      
+      // Fallback to localStorage
       const saved = localStorage.getItem('aspireExamineStudentView');
       return (saved as ViewState) || 'streams';
     } catch { return 'streams'; }
@@ -155,12 +171,15 @@ const AppContent = () => {
       if (window.location.pathname === '/student') {
         const state = (event.state || {}) as any;
         const nextView = state.studentView || 'streams';
-        setStudentView(nextView as ViewState);
+        // Only update if the view is actually different to avoid conflicts
+        if (nextView !== studentView) {
+          setStudentView(nextView as ViewState);
+        }
       }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  }, [studentView]);
 
   useEffect(() => {
     if (window.location.pathname === '/student') {
@@ -171,6 +190,33 @@ const AppContent = () => {
   // Restore last visited student view on app load
   useEffect(() => {
     try {
+      // Check URL parameters first
+      if (window.location.pathname === '/student') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const practiceSectionId = urlParams.get('practiceSectionId');
+        const streamId = urlParams.get('streamId');
+        const subjectId = urlParams.get('subjectId');
+        const chapterId = urlParams.get('chapterId');
+        
+        if (practiceSectionId) {
+          setStudentView('practiceSection');
+          return;
+        }
+        if (chapterId) {
+          setStudentView('papers');
+          return;
+        }
+        if (subjectId) {
+          setStudentView('subjects');
+          return;
+        }
+        if (streamId) {
+          setStudentView('subjects');
+          return;
+        }
+      }
+      
+      // Fallback to localStorage
       const saved = localStorage.getItem('aspireExamineStudentView');
       if (saved) setStudentView(saved as ViewState);
     } catch {}
@@ -212,7 +258,7 @@ const AppContent = () => {
       let user: User;
 
       if (profile) {
-        const avatarUrl = profile.profile_picture ? `${profile.profile_picture}?t=${Date.now()}` : `https://i.pravatar.cc/150?u=${session.user.id}`;
+        const avatarUrl = profile.profile_picture ? `${profile.profile_picture}?t=${Date.now()}` : getCartoonAvatar(session.user.id);
         
         user = {
           id: session.user.id,
@@ -244,7 +290,7 @@ const AppContent = () => {
             email: session.user.email!,
             role: 'student',
             name: session.user.user_metadata?.full_name || session.user.email || 'New User',
-            avatar: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.id}`,
+            avatar: session.user.user_metadata?.avatar_url || getCartoonAvatar(session.user.id),
           };
         } else {
           user = {
@@ -252,7 +298,7 @@ const AppContent = () => {
             email: session.user.email!,
             role: (newProfile.role as 'student' | 'admin') || 'student',
             name: newProfile.full_name || session.user.email || 'New User',
-            avatar: newProfile.profile_picture ? `${newProfile.profile_picture}?t=${Date.now()}` : `https://i.pravatar.cc/150?u=${session.user.id}`,
+            avatar: newProfile.profile_picture ? `${newProfile.profile_picture}?t=${Date.now()}` : getCartoonAvatar(session.user.id),
           };
         }
       }
@@ -357,7 +403,13 @@ const AppContent = () => {
             path="/student"
             element={
               <ProtectedRoute user={currentUser} role="student">
-                <DashboardLayout user={currentUser} onLogout={handleLogout} studentView={studentView} setStudentView={setStudentView}>
+                <DashboardLayout 
+                  user={currentUser} 
+                  onLogout={handleLogout} 
+                  studentView={studentView} 
+                  setStudentView={setStudentView}
+                  currentView={studentView}
+                >
                   <StudentDashboard
                     user={currentUser!}
                     streams={streams}
@@ -375,16 +427,17 @@ const AppContent = () => {
             path="/admin/*"
             element={
               <ProtectedRoute user={currentUser} role="admin">
-                <DashboardLayout user={currentUser} onLogout={handleLogout} studentView={studentView} setStudentView={setStudentView}>
-                  <AdminDashboard
-                    streams={streams}
-                    setStreams={setStreams}
-                    user={currentUser!}
-                    onUpdateUser={handleUpdateUser}
-                    notebookFolders={notebookFolders}
-                    setNotebookFolders={setNotebookFolders}
-                  />
-                </DashboardLayout>
+                <AdminDashboardWrapper
+                  user={currentUser}
+                  onLogout={handleLogout}
+                  studentView={studentView}
+                  setStudentView={setStudentView}
+                  streams={streams}
+                  setStreams={setStreams}
+                  onUpdateUser={handleUpdateUser}
+                  notebookFolders={notebookFolders}
+                  setNotebookFolders={setNotebookFolders}
+                />
               </ProtectedRoute>
             }
           />
@@ -395,7 +448,67 @@ const AppContent = () => {
   );
 }
 
-const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children }: { user: User | null, onLogout: () => void, studentView: ViewState, setStudentView: (view: ViewState) => void, children: React.ReactNode }) => {
+const AdminDashboardWrapper = ({ 
+  user, 
+  onLogout, 
+  studentView, 
+  setStudentView, 
+  streams, 
+  setStreams, 
+  onUpdateUser, 
+  notebookFolders, 
+  setNotebookFolders 
+}: {
+  user: User | null;
+  onLogout: () => void;
+  studentView: ViewState;
+  setStudentView: (view: ViewState) => void;
+  streams: Stream[];
+  setStreams: React.Dispatch<React.SetStateAction<Stream[]>>;
+  onUpdateUser: (user: User) => void;
+  notebookFolders: NotebookFolder[];
+  setNotebookFolders: React.Dispatch<React.SetStateAction<NotebookFolder[]>>;
+}) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentAdminSection = location.pathname.split('/')[2] || 'dashboard';
+  
+  const handleAdminSectionChange = (section: string) => {
+    // Use React Router navigation for smooth transitions
+    navigate(`/admin/${section}`);
+  };
+
+  return (
+    <DashboardLayout 
+      user={user} 
+      onLogout={onLogout} 
+      studentView={studentView} 
+      setStudentView={setStudentView}
+      currentAdminSection={currentAdminSection}
+      onAdminSectionChange={handleAdminSectionChange}
+    >
+      <AdminDashboard
+        streams={streams}
+        setStreams={setStreams}
+        user={user!}
+        onUpdateUser={onUpdateUser}
+        notebookFolders={notebookFolders}
+        setNotebookFolders={setNotebookFolders}
+      />
+    </DashboardLayout>
+  );
+};
+
+const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children, currentView, currentAdminSection, onAdminSectionChange }: { 
+  user: User | null, 
+  onLogout: () => void, 
+  studentView: ViewState, 
+  setStudentView: (view: ViewState) => void, 
+  children: React.ReactNode,
+  currentView?: ViewState,
+  currentAdminSection?: string,
+  onAdminSectionChange?: (section: string) => void
+}) => {
   const [viewMode, setViewMode] = useState<'student' | 'admin'>(user?.role || 'student');
 
   const handleViewAs = (role: 'student' | 'admin') => {
@@ -414,6 +527,9 @@ const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children
           onNavigate={setStudentView}
           isAdminViewingAsStudent={isAdminViewingAsStudent}
           onReturnToAdmin={() => handleViewAs('admin')}
+          currentView={currentView}
+          currentAdminSection={currentAdminSection}
+          onAdminSectionChange={onAdminSectionChange}
         />
       )}
       {children}

@@ -83,6 +83,99 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Restore state from URL parameters on component mount
+  useEffect(() => {
+    const restoreState = () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const streamId = urlParams.get('streamId');
+        const subjectId = urlParams.get('subjectId');
+        const chapterId = urlParams.get('chapterId');
+        const practiceSectionId = urlParams.get('practiceSectionId');
+        
+        // If we have URL parameters, we need to restore state regardless of currentView
+        if (streamId || subjectId || chapterId || practiceSectionId) {
+          let streamToSet: Stream | null = null;
+          let subjectToSet: Subject | null = null;
+          let chapterToSet: Chapter | null = null;
+          let practiceSectionToSet: PracticeSection | null = null;
+          let viewToSet: ViewState = 'streams';
+          
+          // Find and set the stream
+          if (streamId && streams.length > 0) {
+            streamToSet = streams.find(s => s.id === streamId) || null;
+            if (streamToSet) {
+              setSelectedStream(streamToSet);
+            }
+          }
+          
+          // Find and set the subject
+          if (subjectId && streamToSet) {
+            subjectToSet = streamToSet.subjects.find(s => s.id === subjectId) || null;
+            if (subjectToSet) {
+              setSelectedSubject(subjectToSet);
+            }
+          }
+          
+          // Find and set the chapter
+          if (chapterId && subjectToSet) {
+            chapterToSet = subjectToSet.chapters?.find(c => c.id === chapterId) || null;
+            if (chapterToSet) {
+              setSelectedChapter(chapterToSet);
+            }
+          }
+          
+          // Find and set the practice section
+          if (practiceSectionId && streamToSet) {
+            practiceSectionToSet = streamToSet.practiceSections?.find(ps => ps.id === practiceSectionId) || null;
+            if (practiceSectionToSet) {
+              setSelectedPracticeSection(practiceSectionToSet);
+              setSelectedStream(streamToSet); // Ensure stream is set for practice section
+            }
+          }
+          
+          // Determine the correct view based on what we found
+          if (practiceSectionId && practiceSectionToSet) {
+            viewToSet = 'practiceSection';
+          } else if (chapterId && chapterToSet) {
+            viewToSet = 'papers';
+          } else if (subjectId && subjectToSet) {
+            viewToSet = subjectToSet.chapters && subjectToSet.chapters.length > 0 ? 'chapters' : 'papers';
+          } else if (streamId && streamToSet) {
+            viewToSet = 'subjects';
+          }
+          
+          // Set the view if it's different from current
+          if (viewToSet !== currentView) {
+            setCurrentView(viewToSet);
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring state:', error);
+      }
+    };
+
+    // Only restore state if streams are loaded
+    if (streams.length > 0) {
+      restoreState();
+    }
+  }, [streams, setCurrentView]);
+
+  // Handle initial URL parameter restoration on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const practiceSectionId = urlParams.get('practiceSectionId');
+    const streamId = urlParams.get('streamId');
+    const subjectId = urlParams.get('subjectId');
+    const chapterId = urlParams.get('chapterId');
+    
+    // If we have URL parameters, we should not be on streams view initially
+    if (practiceSectionId || streamId || subjectId || chapterId) {
+      // Don't change currentView here, let the main restoration effect handle it
+      // This just ensures we don't default to streams if we have URL params
+    }
+  }, []); // Run only on mount
   
   // New state for practice sessions
   const [selectedPracticeSection, setSelectedPracticeSection] = useState<PracticeSection | null>(null);
@@ -109,7 +202,12 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setCurrentView('subjects');
     try {
       if (window.location.pathname === '/student') {
-        window.history.pushState({ studentView: 'subjects', streamId: stream.id }, document.title);
+        const url = new URL(window.location.href);
+        url.searchParams.set('streamId', stream.id);
+        url.searchParams.delete('subjectId');
+        url.searchParams.delete('chapterId');
+        url.searchParams.delete('practiceSectionId');
+        window.history.pushState({ studentView: 'subjects', streamId: stream.id }, document.title, url.toString());
       }
     } catch {}
   };
@@ -124,7 +222,11 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     }
     try {
       if (window.location.pathname === '/student') {
-        window.history.pushState({ studentView: subject.chapters?.length ? 'chapters' : 'papers', streamId: selectedStream?.id, subjectId: subject.id }, document.title);
+        const url = new URL(window.location.href);
+        url.searchParams.set('subjectId', subject.id);
+        url.searchParams.delete('chapterId');
+        url.searchParams.delete('practiceSectionId');
+        window.history.pushState({ studentView: subject.chapters?.length ? 'chapters' : 'papers', streamId: selectedStream?.id, subjectId: subject.id }, document.title, url.toString());
       }
     } catch {}
   };
@@ -133,7 +235,16 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setSelectedPracticeSection(section);
     setSelectedStream(streams.find(s => s.practiceSections?.some(ps => ps.id === section.id)) || null); // Correctly find the stream
     // This view will now show the three options
-    setCurrentView('practiceSection'); 
+    setCurrentView('practiceSection');
+    try {
+      if (window.location.pathname === '/student') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('practiceSectionId', section.id);
+        url.searchParams.delete('subjectId');
+        url.searchParams.delete('chapterId');
+        window.history.pushState({ studentView: 'practiceSection', practiceSectionId: section.id }, document.title, url.toString());
+      }
+    } catch {}
   };
 
   const handlePracticeTypeSelect = (type: 'FULL' | 'SUBJECT' | 'CHAPTER') => {
@@ -159,7 +270,9 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setCurrentView('papers');
     try {
       if (window.location.pathname === '/student') {
-        window.history.pushState({ studentView: 'papers', streamId: selectedStream?.id, subjectId: selectedSubject?.id, chapterId: chapter.id }, document.title);
+        const url = new URL(window.location.href);
+        url.searchParams.set('chapterId', chapter.id);
+        window.history.pushState({ studentView: 'papers', streamId: selectedStream?.id, subjectId: selectedSubject?.id, chapterId: chapter.id }, document.title, url.toString());
       }
     } catch {}
   };
@@ -273,39 +386,119 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setPracticeType(null);
     setPracticeSubject(null);
     setSelectedNotebookFolder(null);
+    
+    // Clear URL parameters when navigating to home
+    try {
+      if (window.location.pathname === '/student') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('streamId');
+        url.searchParams.delete('subjectId');
+        url.searchParams.delete('chapterId');
+        url.searchParams.delete('practiceSectionId');
+        window.history.pushState({ studentView: 'streams' }, document.title, url.toString());
+      }
+    } catch {}
   };
 
   const handleBackNavigation = () => {
-    try {
-      if (window.location.pathname === '/student' && window.history.length > 1) {
-        window.history.back();
-        return;
-      }
-    } catch {}
+    // Handle back navigation based on current view and state
     if (currentView === 'subjects' || currentView === 'practiceSection' || currentView === 'notebooks' || currentView === 'tests') {
       navigateToHome();
     } else if (currentView === 'papers') {
       if (selectedChapter) {
         setCurrentView('chapters');
         setSelectedChapter(null);
+        // Update URL
+        try {
+          if (window.location.pathname === '/student') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('chapterId');
+            window.history.pushState({ studentView: 'chapters' }, document.title, url.toString());
+          }
+        } catch {}
       } else {
         setCurrentView('subjects');
         setSelectedSubject(null);
+        // Update URL
+        try {
+          if (window.location.pathname === '/student') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('subjectId');
+            window.history.pushState({ studentView: 'subjects' }, document.title, url.toString());
+          }
+        } catch {}
       }
     } else if (currentView === 'chapters') {
       setCurrentView('subjects');
       setSelectedSubject(null);
+      // Update URL
+      try {
+        if (window.location.pathname === '/student') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('subjectId');
+          window.history.pushState({ studentView: 'subjects' }, document.title, url.toString());
+        }
+      } catch {}
     } else if (currentView === 'practiceSubject') {
       setPracticeSubject(null);
       setPracticeType(null);
-      setCurrentView('practiceSection'); 
+      setCurrentView('practiceSection');
+      // Update URL
+      try {
+        if (window.location.pathname === '/student') {
+          const url = new URL(window.location.href);
+          // Keep practiceSectionId, remove other params
+          url.searchParams.delete('subjectId');
+          url.searchParams.delete('chapterId');
+          window.history.pushState({ studentView: 'practiceSection' }, document.title, url.toString());
+        }
+      } catch {}
     } else if (currentView === 'practiceChapter') {
       setCurrentView('practiceSubject');
+      // Update URL
+      try {
+        if (window.location.pathname === '/student') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('chapterId');
+          window.history.pushState({ studentView: 'practiceSubject' }, document.title, url.toString());
+        }
+      } catch {}
     } else if (currentView === 'exam') {
       // Go back to the most relevant previous view
-      if (practiceType) setCurrentView('practiceSection');
-      else if (selectedChapter) setCurrentView('chapters');
-      else setCurrentView('papers');
+      if (practiceType) {
+        setCurrentView('practiceSection');
+        // Update URL
+        try {
+          if (window.location.pathname === '/student') {
+            const url = new URL(window.location.href);
+            // Keep practiceSectionId, remove other params
+            url.searchParams.delete('subjectId');
+            url.searchParams.delete('chapterId');
+            window.history.pushState({ studentView: 'practiceSection' }, document.title, url.toString());
+          }
+        } catch {}
+      } else if (selectedChapter) {
+        setCurrentView('chapters');
+        // Update URL
+        try {
+          if (window.location.pathname === '/student') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('chapterId');
+            window.history.pushState({ studentView: 'chapters' }, document.title, url.toString());
+          }
+        } catch {}
+      } else {
+        setCurrentView('papers');
+        // Update URL
+        try {
+          if (window.location.pathname === '/student') {
+            const url = new URL(window.location.href);
+            // Keep streamId and subjectId, remove chapterId
+            url.searchParams.delete('chapterId');
+            window.history.pushState({ studentView: 'papers' }, document.title, url.toString());
+          }
+        } catch {}
+      }
       setSelectedPaper(null);
     } else if (currentView === 'results' || currentView === 'profile' || currentView === 'exam-review') {
       navigateToHome();
@@ -318,10 +511,10 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
   const getBreadcrumbs = () => {
     const breadcrumbs: string[] = [];
     if (currentView === 'profile') return ['Profile'];
-    if (currentView === 'notebooks') return ['Notebooks'];
+    if (currentView === 'notebooks') return ['Library'];
     if (currentView === 'tests') return ['Test Series'];
     
-    if (currentView === 'notebooks-folder' && selectedNotebookFolder) return ['Notebooks', selectedNotebookFolder.name];
+    if (currentView === 'notebooks-folder' && selectedNotebookFolder) return ['Library', selectedNotebookFolder.name];
     if (selectedStream) breadcrumbs.push(selectedStream.name);
     if (selectedSubject) breadcrumbs.push(selectedSubject.name);
     if (selectedChapter) breadcrumbs.push(selectedChapter.name);
@@ -337,8 +530,8 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
 
   const viewTitles: Partial<Record<ViewState, string>> = {
     streams: "Home",
-    notebooks: "Notebooks",
-    'notebooks-folder': selectedNotebookFolder?.name || 'Notebooks',
+    notebooks: "Library",
+    'notebooks-folder': selectedNotebookFolder?.name || 'Library',
     tests: "Test Series",
   };
 
@@ -525,19 +718,36 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
               className="mt-8 space-y-6"
             >
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-                {(notebookFolders || []).map((folder, index) => (
-                  <motion.div
-                    key={folder.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex flex-col items-center cursor-pointer"
-                    onClick={() => handleFolderClick(folder)}
-                  >
-                    <FolderAnimation />
-                    <span className="mt-2 text-sm font-medium text-center">{folder.name}</span>
-                  </motion.div>
-                ))}
+                {(notebookFolders || []).map((folder, index) => {
+                  // Define different colors for each folder
+                  const colors = [
+                    '#5227FF', // Purple (default)
+                    '#FF6B6B', // Red
+                    '#4ECDC4', // Teal
+                    '#45B7D1', // Blue
+                    '#96CEB4', // Green
+                    '#FFEAA7', // Yellow
+                    '#DDA0DD', // Plum
+                    '#98D8C8', // Mint
+                    '#F7DC6F', // Light Yellow
+                    '#BB8FCE'  // Light Purple
+                  ];
+                  const folderColor = colors[index % colors.length];
+                  
+                  return (
+                    <motion.div
+                      key={folder.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex flex-col items-center cursor-pointer"
+                      onClick={() => handleFolderClick(folder)}
+                    >
+                      <FolderAnimation color={folderColor} />
+                      <span className="mt-2 text-sm font-medium text-center">{folder.name}</span>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           )}

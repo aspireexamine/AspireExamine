@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Home, List, FileText, HelpCircle, Upload, Bot, Users, BarChart, Settings, Notebook, TestTube2, ChevronLeft } from 'lucide-react';
@@ -11,12 +11,12 @@ interface AdminSidebarProps {
   onClose?: () => void;
 }
 
-const navItems = [
+export const adminMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'streams', label: 'Streams', icon: List },
   { id: 'papers', label: 'Papers', icon: FileText },
   { id: 'questions', label: 'Questions', icon: HelpCircle },
-  { id: 'notebooks', label: 'Notebooks', icon: Notebook },
+  { id: 'notebooks', label: 'Library', icon: Notebook },
   { id: 'tests', label: 'Test Manager', icon: TestTube2 },
   { id: 'import', label: 'Bulk Import', icon: Upload },
   { id: 'ai-tools', label: 'AI Tools', icon: Bot },
@@ -24,6 +24,37 @@ const navItems = [
   { id: 'analytics', label: 'Analytics', icon: BarChart },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
+
+const navItems = adminMenuItems;
+
+export function AdminSidebarNav({ currentSection, onSectionChange, collapsed, onLinkClick }: { currentSection: string; onSectionChange: (section: string) => void; collapsed?: boolean; onLinkClick?: () => void; }) {
+  return (
+    <nav className="flex flex-col gap-2 p-4">
+      {adminMenuItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = currentSection === item.id;
+
+        return (
+          <Button
+            key={item.id}
+            variant={isActive ? 'secondary' : 'ghost'}
+            onClick={() => {
+              onSectionChange(item.id);
+              onLinkClick?.();
+            }}
+            className="w-full justify-start h-11 text-base px-4"
+            title={collapsed ? item.label : undefined}
+          >
+            <Icon className="h-5 w-5 mr-4 flex-shrink-0" />
+            <span className={cn("transition-opacity duration-200", collapsed ? "opacity-0" : "opacity-100")}>
+              {item.label}
+            </span>
+          </Button>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function AdminSidebar({ currentSection, onSectionChange, className, isMobile = false, onClose }: AdminSidebarProps) {
   const [hoverCollapsed, setHoverCollapsed] = useState(true);

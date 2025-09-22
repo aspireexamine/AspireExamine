@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Home, Notebook, TestTube2, ChevronLeft } from 'lucide-react';
@@ -11,7 +11,7 @@ interface StudentSidebarProps {
 
 export const studentMenuItems = [
   { id: 'streams', label: 'Home', icon: Home },
-  { id: 'notebooks', label: 'Notebooks', icon: Notebook },
+  { id: 'notebooks', label: 'Library', icon: Notebook },
   { id: 'tests', label: 'Tests', icon: TestTube2 },
 ];
 

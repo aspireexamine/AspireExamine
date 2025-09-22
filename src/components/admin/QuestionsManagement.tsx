@@ -417,7 +417,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
 
       {/* Search */}
       <Card>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="p-3 sm:p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -470,100 +470,106 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
               transition={{ delay: index * 0.05, duration: 0.3 }}
             >
               <Card className={`border-2 hover:shadow-lg transition-all duration-200 ${paperContext && isQuestionInPaper(question.id) ? 'border-primary/50' : ''}`}>
-                <CardHeader className="p-4 sm:p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2 pr-4">
-                      <div className="flex items-center gap-4">
-                        {isSelectionMode && ( // Conditionally render checkbox
-                          <Checkbox
-                            id={`select-${question.id}`}
-                            checked={selectedQuestions.includes(question.id)}
-                            onCheckedChange={(checked) => {
-                              setSelectedQuestions(prev => checked ? [...prev, question.id] : prev.filter(id => id !== question.id));
-                            }}
-                            aria-label={`Select question ${question.id}`} />
-                        )}
-                        <div className="flex items-center flex-wrap gap-2 mb-2">
-                          {paperContext ? (
-                             <Badge variant={isQuestionInPaper(question.id) ? 'default' : 'outline'}>
-                               {isQuestionInPaper(question.id) ? 'In This Paper' : 'Available'}
+                <CardHeader className="p-3 sm:p-4">
+                  <div className="space-y-3">
+                    {/* Top row with badges and actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center flex-wrap gap-1.5 mb-2">
+                          {isSelectionMode && (
+                            <Checkbox
+                              id={`select-${question.id}`}
+                              checked={selectedQuestions.includes(question.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedQuestions(prev => checked ? [...prev, question.id] : prev.filter(id => id !== question.id));
+                              }}
+                              aria-label={`Select question ${question.id}`} 
+                              className="flex-shrink-0"
+                            />
+                          )}
+                          {paperContext && (
+                             <Badge variant={isQuestionInPaper(question.id) ? 'default' : 'outline'} className="text-xs">
+                               {isQuestionInPaper(question.id) ? 'In Paper' : 'Available'}
                              </Badge>
-                          ) : null}
-                          <Badge className={
+                          )}
+                          <Badge className={`text-xs ${
                             question.difficulty === 'Easy' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' :
                             question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300' :
                             'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
-                          }>
+                          }`}>
                             {question.difficulty}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">{question.marks} marks</Badge>
-                          {question.filePath && (
-                            <Badge variant="secondary" className="text-xs gap-1">
-                              <FileCode className="h-3 w-3" />
-                              {question.filePath}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="text-xs">{question.marks}m</Badge>
                         </div>
+                        {question.filePath && (
+                          <Badge variant="secondary" className="text-xs gap-1 mb-2">
+                            <FileCode className="h-3 w-3" />
+                            <span className="truncate max-w-[200px] sm:max-w-none">{question.filePath}</span>
+                          </Badge>
+                        )}
                       </div>
-                      <CardTitle className="text-base leading-relaxed">{question.question}</CardTitle>
-                      {question.imageUrl && (
-                        <div className="mt-2"><img src={question.imageUrl} alt="Question visual" className="rounded-md max-h-48 object-contain"/></div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-0">
-                      {paperContext && (
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleQuestionInPaper(question)}>
-                          {isQuestionInPaper(question.id) ? 'Remove' : 'Add'}
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog('edit', question)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-                            <Trash2 className="h-4 w-4" />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {paperContext && (
+                          <Button variant="ghost" size="sm" onClick={() => handleToggleQuestionInPaper(question)} className="text-xs px-2 py-1 h-auto">
+                            {isQuestionInPaper(question.id) ? 'Remove' : 'Add'}
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this question.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete([question.id])}>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog('edit', question)} className="h-8 w-8">
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 h-8 w-8">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this question.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete([question.id])}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
+                    {/* Question text */}
+                    <CardTitle className="text-sm sm:text-base leading-relaxed break-words">{question.question}</CardTitle>
+                    {question.imageUrl && (
+                      <div className="mt-2">
+                        <img src={question.imageUrl} alt="Question visual" className="rounded-md max-h-32 sm:max-h-48 object-contain w-full"/>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {question.options.map((option: string, optionIndex: number) => (
                       <div 
                         key={optionIndex}
-                        className={`p-2 rounded border text-sm ${
+                        className={`p-2 rounded border text-xs sm:text-sm ${
                           optionIndex === question.correctAnswer
                             ? 'border-green-300 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/20 dark:text-green-300'
                             : 'border-border bg-muted/30'
                         }`}
                       >
-                        <span className="font-semibold mr-2">({String.fromCharCode(65 + optionIndex)})</span>
-                        {option}
+                        <span className="font-semibold mr-1">({String.fromCharCode(65 + optionIndex)})</span>
+                        <span className="break-words">{option}</span>
                       </div>
                     ))}
                   </div>
                   {question.explanation && (
-                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                        <HelpCircle className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-600 text-sm">Explanation</span>
+                    <div className="mt-3 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                        <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                        <span className="font-medium text-blue-600 text-xs sm:text-sm">Explanation</span>
                       </div>
-                      <p className="text-sm text-blue-800 dark:text-blue-200">{question.explanation}</p>
+                      <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 break-words">{question.explanation}</p>
                     </div>
                   )}
                 </CardContent>
@@ -596,14 +602,14 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
       
       {/* Dialog for editing/creating questions */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader className="p-4 sm:p-6 pb-0">
-            <DialogTitle className="text-lg sm:text-xl">{dialogMode === 'create' ? 'Create New Question' : 'Edit Question'}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="p-3 sm:p-4 pb-0 flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">{dialogMode === 'create' ? 'Create New Question' : 'Edit Question'}</DialogTitle>
+            <DialogDescription className="text-sm">
               {dialogMode === 'create' ? 'Fill in the form to create a new question.' : 'Update the question details.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2 max-h-[75vh] overflow-y-auto px-4 sm:px-6 hide-scrollbar">
+          <div className="space-y-3 sm:space-y-4 py-2 flex-1 overflow-y-auto px-3 sm:px-4 hide-scrollbar">
               <div>
                 <Label htmlFor="question" className="text-sm">Question Text</Label>
                 <Textarea id="question" value={formData.question} onChange={(e) => setFormData({ ...formData, question: e.target.value })} placeholder="Enter the question statement..."/>
@@ -615,10 +621,15 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
               <div className="space-y-3">
                 <Label className="text-sm">Options</Label>
                 {formData.options.map((option, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <Badge variant={formData.correctAnswer === index ? "default" : "outline"} className="w-8 h-8 flex-shrink-0 flex items-center justify-center">{String.fromCharCode(65 + index)}</Badge>
-                    <Input value={option} onChange={(e) => handleOptionChange(index, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + index)}`}/>
-                    <Button variant={formData.correctAnswer === index ? "default" : "outline"} size="sm" className="h-8 text-xs px-2" onClick={() => setFormData({ ...formData, correctAnswer: index })}>{formData.correctAnswer === index ? 'Correct' : 'Set as Correct'}</Button>
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={formData.correctAnswer === index ? "default" : "outline"} className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 flex items-center justify-center text-xs">{String.fromCharCode(65 + index)}</Badge>
+                      <span className="text-sm font-medium">Option {String.fromCharCode(65 + index)}</span>
+                    </div>
+                    <Input value={option} onChange={(e) => handleOptionChange(index, e.target.value)} placeholder={`Enter option ${String.fromCharCode(65 + index)}`} className="w-full"/>
+                    <Button variant={formData.correctAnswer === index ? "default" : "outline"} size="sm" className="w-full sm:w-auto text-xs px-3" onClick={() => setFormData({ ...formData, correctAnswer: index })}>
+                      {formData.correctAnswer === index ? '✓ Correct Answer' : 'Set as Correct'}
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -626,7 +637,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                 <Label htmlFor="explanation" className="text-sm">Explanation (Optional)</Label>
                 <Textarea id="explanation" value={formData.explanation} onChange={(e) => setFormData({ ...formData, explanation: e.target.value })} placeholder="Explain why this is the correct answer..." className="min-h-20"/>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t ">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t">
                 <div>
                   <Label htmlFor="difficulty-meta" className="text-sm">Difficulty</Label>
                   <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value as any })}>
@@ -645,9 +656,9 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
               </div>
               {/* File Destination Selector */}
               {!paperContext && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-md font-medium">File Destination</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t">
+                  <h3 className="text-sm sm:text-base font-medium">File Destination</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <Label htmlFor="destination-type-select">Import Into</Label>
                       <Select value={targetType} onValueChange={(value) => { setTargetType(value as any); resetSelections(); }}>
@@ -669,7 +680,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                   </div>
 
                   {targetType === 'stream_subject' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t">
                       <div>
                         <Label htmlFor="subject-select-q">Subject</Label>
                         <Select value={formData.subjectId} onValueChange={id => setFormData(prev => ({ ...prev, subjectId: id, chapterId: '', paperId: '' }))} disabled={!selectedStreamId}>
@@ -695,7 +706,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                   )}
 
                   {targetType === 'stream_practice' && (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 mt-2 border-t">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 mt-2 border-t">
                       <div>
                         <Label htmlFor="practice-section-select">Target</Label>
                         <Select value={formData.targetId} onValueChange={id => { setFormData(prev => ({ ...prev, targetId: id, subjectId: '', paperId: '' })); setSelectedTestType(''); }}>
@@ -738,7 +749,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                   )}
 
                   {targetType === 'test_series' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 mt-2 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 mt-2 border-t">
                       <div>
                         <Label htmlFor="test-series-select">Test Series</Label>
                         <Select value={formData.targetId} onValueChange={id => setFormData(prev => ({ ...prev, targetId: id, testId: '' }))} disabled={!selectedStreamId}>
@@ -756,7 +767,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                     </div>
                   )}
                    {targetType === 'stream_practice' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 mt-2 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 mt-2 border-t">
                       {selectedTestType === 'CHAPTER_WISE' && formData.subjectId && (
                       <div>
                         <Label htmlFor="chapter-select-import">Chapter</Label>
@@ -790,7 +801,7 @@ export function QuestionsManagement({ streams, setStreams, paperContext, onUpdat
                     </div>)}
                 </div>
               )}
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3 sm:pt-4 border-t flex-shrink-0">
                 <Button onClick={handleSubmit} className="w-full sm:w-auto" disabled={!isFormValid}>
                   {dialogMode === 'create' ? 'Create Question' : 'Save Changes'}
                 </Button>

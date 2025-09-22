@@ -7,6 +7,7 @@ import { User as UserType } from '@/types';
 import { ViewState } from '../student/StudentDashboard';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { StudentSidebarNav } from '../student/StudentSidebar';
+import { AdminSidebarNav } from '../admin/AdminSidebar';
 import { useState, useEffect } from 'react';
 
 const AspireExamineLogo = () => (
@@ -26,9 +27,12 @@ interface HeaderProps {
   onNavigate: (view: ViewState) => void;
   isAdminViewingAsStudent?: boolean;
   onReturnToAdmin?: () => void;
+  currentView?: ViewState;
+  currentAdminSection?: string;
+  onAdminSectionChange?: (section: string) => void;
 }
 
-export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin }: HeaderProps) {
+export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin, currentView, currentAdminSection, onAdminSectionChange }: HeaderProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -66,18 +70,29 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
                 <div className="p-4 border-b">
                   <h2 className="text-base font-semibold">Menu</h2>
                 </div>
-                <StudentSidebarNav 
-                  currentView="streams" 
-                  onNavigate={(view) => {
-                    if (view === 'streams') {
-                      onNavigate('streams');
-                    } else {
-                      onNavigate(view as ViewState);
-                    }
-                    setIsMobileSidebarOpen(false);
-                  }}
-                  onLinkClick={() => setIsMobileSidebarOpen(false)}
-                />
+                {user?.role === 'admin' && currentAdminSection && onAdminSectionChange ? (
+                  <AdminSidebarNav 
+                    currentSection={currentAdminSection} 
+                    onSectionChange={(section) => {
+                      onAdminSectionChange(section);
+                      setIsMobileSidebarOpen(false);
+                    }}
+                    onLinkClick={() => setIsMobileSidebarOpen(false)}
+                  />
+                ) : (
+                  <StudentSidebarNav 
+                    currentView={currentView || "streams"} 
+                    onNavigate={(view) => {
+                      if (view === 'streams') {
+                        onNavigate('streams');
+                      } else {
+                        onNavigate(view as ViewState);
+                      }
+                      setIsMobileSidebarOpen(false);
+                    }}
+                    onLinkClick={() => setIsMobileSidebarOpen(false)}
+                  />
+                )}
               </SheetContent>
             </Sheet>
           ) : (

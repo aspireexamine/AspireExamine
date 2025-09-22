@@ -188,7 +188,7 @@ export function NotebookManager({ notebookFolders, setNotebookFolders }: Noteboo
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleOpenFolderDialog('edit', folder); }}><Edit className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={(e) => { e.stopPropagation(); handleOpenDeleteDialog('folder', folder.id); }}><Trash2 className="h-4 w-4" /></Button>
                     <Button size="sm" className="h-8" onClick={(e) => { e.stopPropagation(); handleOpenNotebookDialog('create', folder); }}>
-                      <Plus className="h-4 w-4 mr-2" /> Add Notebook
+                      <Plus className="h-4 w-4 mr-2" /> Add Library Item
                     </Button>
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export function NotebookManager({ notebookFolders, setNotebookFolders }: Noteboo
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-4">No notebooks in this folder yet.</p>
+                  <p className="text-center text-muted-foreground py-4">No library items in this folder yet.</p>
                 )}
               </AccordionContent>
             </Card>
@@ -242,7 +242,7 @@ export function NotebookManager({ notebookFolders, setNotebookFolders }: Noteboo
       <Dialog open={isNotebookDialogOpen} onOpenChange={setIsNotebookDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{dialogMode === 'create' ? 'Add Notebook' : 'Edit Notebook'}</DialogTitle>
+            <DialogTitle>{dialogMode === 'create' ? 'Add Library Item' : 'Edit Library Item'}</DialogTitle>
           </DialogHeader>
           <Tabs defaultValue="url" className="py-4">
             <TabsList>
@@ -251,17 +251,17 @@ export function NotebookManager({ notebookFolders, setNotebookFolders }: Noteboo
             </TabsList>
             <TabsContent value="url" className="space-y-4 pt-4">
               <div>
-                <Label htmlFor="notebook-name">Notebook Name</Label>
+                <Label htmlFor="notebook-name">Library Item Name</Label>
                 <Input id="notebook-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <Label htmlFor="notebook-url">Notebook URL</Label>
+                <Label htmlFor="notebook-url">Library Item URL</Label>
                 <Input id="notebook-url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
               </div>
             </TabsContent>
             <TabsContent value="device" className="space-y-4 pt-4">
               <div>
-                <Label htmlFor="notebook-file-name">Notebook Name (Optional)</Label>
+                <Label htmlFor="notebook-file-name">Library Item Name (Optional)</Label>
                 <Input id="notebook-file-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Leave blank to use file name" />
               </div>
               <Dropzone onFileChange={setSelectedFile} />
