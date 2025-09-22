@@ -1,6 +1,7 @@
 import { useState, useMemo, Fragment, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { 
   StreamCard
 } from './StreamCard';
@@ -12,8 +13,10 @@ import { ResultsPage } from './ResultsPage';
 import { ProfilePage } from './ProfilePage'; 
 import { StudentSidebar } from './StudentSidebar';
 import { StreamCarousel } from './StreamCarousel';
+import { AiAssistantScreen } from '../AiAssistant';
 
 import { Stream, Subject, Paper, Result, User, PracticeSection, PracticeSubject, Chapter, Difficulty } from '@/types';
+import { generateTestResultPDF, PDFReportData } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +57,8 @@ export type ViewState =
   | 'practiceChapter'
   | 'notebooks' 
   | 'notebooks-folder'
-  | 'tests';
+  | 'tests'
+  | 'ai-assistant';
 
 interface StudentDashboardProps {
   user: User;
@@ -371,6 +375,51 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     }
   };
 
+  const handleDownloadPDF = (result: Result) => {
+    try {
+      // Find the paper details
+      let paperToUse: Paper | undefined;
+      if (selectedPaper && selectedPaper.id === result.paperId) {
+        paperToUse = selectedPaper;
+      } else {
+        paperToUse = allPapersForStream.find(p => p.id === result.paperId);
+      }
+
+      // Find the subject and stream details
+      let subjectToUse: Subject | null = null;
+      let streamToUse: Stream | null = null;
+
+      if (paperToUse) {
+        // Find subject
+        for (const stream of streams) {
+          const subject = stream.subjects.find(s => s.id === paperToUse!.subject_id);
+          if (subject) {
+            subjectToUse = subject;
+            streamToUse = stream;
+            break;
+          }
+        }
+      }
+
+      // Prepare PDF data
+      const pdfData: PDFReportData = {
+        result,
+        studentName: user.name,
+        paperTitle: paperToUse?.title || 'Unknown Paper',
+        subjectName: subjectToUse?.name || 'Unknown Subject',
+        streamName: streamToUse?.name || 'Unknown Stream',
+        testDate: new Date(result.createdAt).toLocaleDateString()
+      };
+
+      // Generate and download PDF
+      generateTestResultPDF(pdfData);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // You could add a toast notification here
+      // toast.error('Failed to generate PDF report');
+    }
+  };
+
   const handleFolderClick = (folder: NotebookFolder | null) => {
     setSelectedNotebookFolder(folder);
     setCurrentView('notebooks-folder');
@@ -500,7 +549,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
         } catch {}
       }
       setSelectedPaper(null);
-    } else if (currentView === 'results' || currentView === 'profile' || currentView === 'exam-review') {
+    } else if (currentView === 'results' || currentView === 'profile' || currentView === 'exam-review' || currentView === 'ai-assistant') {
       navigateToHome();
     } else if (currentView === 'notebooks-folder') {
       setCurrentView('notebooks');
@@ -513,6 +562,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     if (currentView === 'profile') return ['Profile'];
     if (currentView === 'notebooks') return ['Library'];
     if (currentView === 'tests') return ['Test Series'];
+    if (currentView === 'ai-assistant') return ['AI Assistant'];
     
     if (currentView === 'notebooks-folder' && selectedNotebookFolder) return ['Library', selectedNotebookFolder.name];
     if (selectedStream) breadcrumbs.push(selectedStream.name);
@@ -533,13 +583,14 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     notebooks: "Library",
     'notebooks-folder': selectedNotebookFolder?.name || 'Library',
     tests: "Test Series",
+    'ai-assistant': "AI Assistant",
   };
 
   if (currentView === 'exam' && selectedPaper) {
     return <TestModeSwitcher paper={selectedPaper} questions={selectedPaper.questions || []} onSubmit={handleExamSubmit} onExit={handleBackNavigation} />;
   }
   if (currentView === 'results' && currentResult) {
-    return <ResultsPage result={currentResult} onGoHome={navigateToHome} onReviewTest={() => handleReviewTest(currentResult)} />;
+    return <ResultsPage result={currentResult} onGoHome={navigateToHome} onReviewTest={() => handleReviewTest(currentResult)} onDownloadPdf={() => handleDownloadPDF(currentResult)} />;
   } 
   console.log("StudentDashboard render - currentView:", currentView, "currentResult:", !!currentResult, "selectedPaper:", !!selectedPaper);
   if (currentView === 'exam-review' && currentResult && selectedPaper) {
@@ -553,7 +604,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       <StudentSidebar
         currentView={currentView}
         onNavigate={(view) => {
@@ -568,29 +619,34 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
             }
           } catch {}
         }} />
-      <main className="flex-1 p-2 sm:p-6 lg:p-8 overflow-y-auto bg-muted/30">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {currentView !== 'streams' ? (
-              <Button variant="ghost" size="icon" onClick={handleBackNavigation} className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back</span>
-              </Button>
-            ) : null}
-            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {viewTitles[currentView] || getBreadcrumbs().slice(-1)[0] || 'Dashboard'}
-            </h1>
+      <main className={cn(
+        "flex-1 bg-muted/30 overflow-hidden",
+        currentView === 'ai-assistant' ? "flex flex-col" : "p-2 sm:p-6 lg:p-8 overflow-y-auto"
+      )}>
+        {currentView !== 'ai-assistant' && (
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              {currentView !== 'streams' ? (
+                <Button variant="ghost" size="icon" onClick={handleBackNavigation} className="h-8 w-8">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Back</span>
+                </Button>
+              ) : null}
+              <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
+                {viewTitles[currentView] || getBreadcrumbs().slice(-1)[0] || 'Dashboard'}
+              </h1>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Dashboard</span>
+              {getBreadcrumbs().map((crumb, index) => (
+                <Fragment key={index}>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>{crumb}</span>
+                </Fragment>
+              ))}
+            </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Dashboard</span>
-            {getBreadcrumbs().map((crumb, index) => (
-              <Fragment key={index}>
-                <ChevronRight className="h-4 w-4" />
-                <span>{crumb}</span>
-              </Fragment>
-            ))}
-          </div>
-        </div>
+        )}
 
         <AlertDialog open={showNoQuestionsAlert} onOpenChange={setShowNoQuestionsAlert}>
           <AlertDialogContent>
@@ -1118,6 +1174,19 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
                   </CardContent>
                 </Card>
               )}
+            </motion.div>
+          )}
+
+          {currentView === 'ai-assistant' && (
+            <motion.div
+              key="ai-assistant"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              <AiAssistantScreen />
             </motion.div>
           )}
         </AnimatePresence>

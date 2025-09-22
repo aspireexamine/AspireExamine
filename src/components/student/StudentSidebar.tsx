@@ -1,23 +1,24 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, Notebook, TestTube2, ChevronLeft } from 'lucide-react';
+import { Home, Notebook, TestTube2, ChevronLeft, Bot } from 'lucide-react';
 
 interface StudentSidebarProps {
   currentView: string;
-  onNavigate: (view: 'streams' | 'notebooks' | 'tests') => void;
+  onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant') => void;
   className?: string;
 }
 
 export const studentMenuItems = [
   { id: 'streams', label: 'Home', icon: Home },
+  { id: 'ai-assistant', label: 'Aspire Ai', icon: Bot },
   { id: 'notebooks', label: 'Library', icon: Notebook },
   { id: 'tests', label: 'Tests', icon: TestTube2 },
 ];
 
-export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkClick }: { currentView: string; onNavigate: (view: 'streams' | 'notebooks' | 'tests') => void; collapsed?: boolean; onLinkClick?: () => void; }) {
+export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkClick }: { currentView: string; onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant') => void; collapsed?: boolean; onLinkClick?: () => void; }) {
   return (
-    <nav className="flex flex-col gap-2 p-4">
+    <nav className="flex flex-col gap-2 -mt-10 px-4">
       {studentMenuItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.id === 'streams'
@@ -29,7 +30,7 @@ export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkCl
             key={item.id}
             variant={isActive ? 'secondary' : 'ghost'}
             onClick={() => {
-              onNavigate(item.id as 'streams' | 'notebooks' | 'tests');
+              onNavigate(item.id as 'streams' | 'notebooks' | 'tests' | 'ai-assistant');
               onLinkClick?.();
             }}
             className="w-full justify-start h-11 text-base px-4"

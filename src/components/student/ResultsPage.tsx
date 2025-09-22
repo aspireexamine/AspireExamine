@@ -219,7 +219,12 @@ export function ResultsPage({ result, onDownloadPdf, onGoHome, onReviewTest }: R
             <Home className="h-4 w-4" />
             Back to Dashboard
           </Button>
-          <Button onClick={onDownloadPdf} className="gap-2 w-full sm:w-auto" size="sm">
+          <Button 
+            onClick={onDownloadPdf} 
+            disabled={!onDownloadPdf}
+            className="gap-2 w-full sm:w-auto" 
+            size="sm"
+          >
             <Download className="h-4 w-4" />
             Download PDF Report
           </Button>
