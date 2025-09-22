@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { History, ArrowDown } from 'lucide-react';
+import { History, ArrowDown, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from './ChatMessage';
@@ -390,17 +390,17 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
 
 
       {/* Main Content Area - Account for fixed input */}
-      <div className="w-full flex flex-col h-[calc(100vh-200px)]">
+      <div className="w-full flex flex-col h-[calc(100vh-40px)]">
         {/* Empty Chat State - Scrollable Layout */}
         {messages.length === 0 && !isLoading ? (
           <div className="relative h-full flex flex-col">
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar">
-               <div className="p-4 pb-64">
-                 <div className="text-center max-w-2xl mx-auto py-8 min-h-[120vh]">
+               <div className="p-4 pb-8">
+                 <div className="text-center max-w-2xl mx-auto py-4">
                   {/* AI Avatar and Greeting */}
-                  <div className="mb-8">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                      <div className="h-8 w-8 text-muted-foreground text-2xl">🤖</div>
+                  <div className="mb-4">
+                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                      <Bot className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h1 className="text-2xl font-semibold text-foreground mb-2">
                       How can I help you today?
@@ -408,7 +408,7 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
                   </div>
 
                   {/* Chat Input - Centered in empty state */}
-                  <div className="mb-8">
+                  <div className="mb-6">
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onStopAI={handleStopAI}
@@ -420,7 +420,7 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
 
                    {/* Get Started Section */}
                    {showGetStarted && (
-                     <div className="flex justify-center mb-16">
+                     <div className="flex justify-center mb-4">
                        <SuggestedActions
                          onActionClick={handleSuggestedAction}
                          onClose={() => setShowGetStarted(false)}
