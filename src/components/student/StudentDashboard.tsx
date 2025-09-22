@@ -621,7 +621,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
         }} />
       <main className={cn(
         "flex-1 bg-muted/30 overflow-hidden",
-        currentView === 'ai-assistant' ? "flex flex-col" : "p-2 sm:p-6 lg:p-8 overflow-y-auto"
+        currentView === 'ai-assistant' ? "flex flex-col min-h-0" : "p-2 sm:p-6 lg:p-8 overflow-y-auto"
       )}>
         {currentView !== 'ai-assistant' && (
           <div className="mb-2 flex items-center justify-between">

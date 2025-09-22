@@ -159,74 +159,75 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
         <History className="h-4 w-4" />
       </Button>
 
-      {/* Main Content Area - Scrollable with padding for fixed input */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-8 pb-24 sm:pb-28">
-        <div className="max-w-4xl mx-auto">
-          {/* Empty Chat State */}
-          {messages.length === 0 && (
-            <div className="flex flex-col h-full">
-              {/* AI Avatar and Greeting - At the top */}
-              <div className="text-center mb-8 pt-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                  <Bot className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h1 className="text-2xl font-semibold text-foreground mb-2">
-                  How can I help you today?
-                </h1>
-              </div>
-
-              {/* Get Started Section */}
-              {showGetStarted && (
-                <div className="flex justify-center">
-                  <SuggestedActions
-                    onActionClick={handleSuggestedAction}
-                    onClose={() => setShowGetStarted(false)}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Active Chat State */}
-          {messages.length > 0 && (
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <ChatMessage
-                  key={message.id}
-                  id={message.id}
-                  role={message.role}
-                  content={message.content}
-                  timestamp={message.timestamp}
-                  isStreaming={message.role === 'assistant' && index === messages.length - 1 && isLoading && !isThinking}
-                />
-              ))}
-              
-              {/* Thinking Animation */}
-              {isThinking && (
-                <div className="flex gap-3 justify-start">
-                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-muted-foreground" />
+      {/* Main Content Area - Following Arcanum structure */}
+      <div className={`flex-1 flex flex-col min-h-0 ${messages.length === 0 && !isLoading ? 'justify-center' : ''}`}>
+        {/* Scrollable Chat Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="mx-auto w-full max-w-4xl">
+            {/* Empty Chat State */}
+            {messages.length === 0 && (
+              <div className="text-center">
+                {/* AI Avatar and Greeting - At the top */}
+                <div className="mb-8 pt-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                    <Bot className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-muted border shadow-sm">
-                    <div className="flex items-center space-x-1">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
+                  <h1 className="text-2xl font-semibold text-foreground mb-2">
+                    How can I help you today?
+                  </h1>
+                </div>
+
+                {/* Get Started Section */}
+                {showGetStarted && (
+                  <div className="flex justify-center">
+                    <SuggestedActions
+                      onActionClick={handleSuggestedAction}
+                      onClose={() => setShowGetStarted(false)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Active Chat State */}
+            {messages.length > 0 && (
+              <div className="space-y-6">
+                {messages.map((message, index) => (
+                  <ChatMessage
+                    key={message.id}
+                    id={message.id}
+                    role={message.role}
+                    content={message.content}
+                    timestamp={message.timestamp}
+                    isStreaming={message.role === 'assistant' && index === messages.length - 1 && isLoading && !isThinking}
+                  />
+                ))}
+                
+                {/* Thinking Animation */}
+                {isThinking && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="h-8 w-8 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-muted border shadow-sm">
+                      <div className="flex items-center space-x-1">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
+                        </div>
+                        <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
                       </div>
-                      <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Fixed Chat Input Area - Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-        <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        {/* Fixed Chat Input Area - Following Arcanum structure */}
+        <div className={`flex-shrink-0 w-full ${messages.length === 0 && !isLoading ? 'max-w-2xl mx-auto px-4 mt-8' : ''}`}>
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
