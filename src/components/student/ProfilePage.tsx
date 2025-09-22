@@ -255,7 +255,6 @@ export function ProfilePage({ user, recentTests, allPapers, onProfileUpdate }: P
                 />
                 <div>
                   <h2 className="text-lg sm:text-2xl font-bold">{user.name}</h2>
-                  <p className="text-xs text-muted-foreground">Student ID: {user.id}</p>
                   <p className="text-xs text-muted-foreground">Role: {user.role}</p>
                 </div>
               </div>

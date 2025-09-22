@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Header as DashboardHeader } from '@/components/layout/Header';
 import { StudentDashboard, ViewState } from '@/components/student/StudentDashboard';
@@ -46,6 +46,7 @@ const AppContent = () => {
   const [loading, setLoading] = useState(true);
   const [hasBootstrapped, setHasBootstrapped] = useState(false);
   const navigate = useNavigate();
+  const aiHistoryRef = useRef<(() => void) | null>(null);
 
   const [streams, setStreams] = useState<Stream[]>(() => {
     try {
@@ -409,6 +410,7 @@ const AppContent = () => {
                   studentView={studentView} 
                   setStudentView={setStudentView}
                   currentView={studentView}
+                  onOpenAIHistory={aiHistoryRef}
                 >
                   <StudentDashboard
                     user={currentUser!}
@@ -418,6 +420,7 @@ const AppContent = () => {
                     onProfileUpdate={fetchUserProfile}
                     onAddResult={handleAddResult}
                     notebookFolders={notebookFolders}
+                    onOpenAIHistory={aiHistoryRef}
                   />
                 </DashboardLayout>
               </ProtectedRoute>
@@ -499,7 +502,7 @@ const AdminDashboardWrapper = ({
   );
 };
 
-const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children, currentView, currentAdminSection, onAdminSectionChange }: { 
+const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory }: { 
   user: User | null, 
   onLogout: () => void, 
   studentView: ViewState, 
@@ -507,7 +510,8 @@ const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children
   children: React.ReactNode,
   currentView?: ViewState,
   currentAdminSection?: string,
-  onAdminSectionChange?: (section: string) => void
+  onAdminSectionChange?: (section: string) => void,
+  onOpenAIHistory?: React.MutableRefObject<(() => void) | null>
 }) => {
   const [viewMode, setViewMode] = useState<'student' | 'admin'>(user?.role || 'student');
 
@@ -530,6 +534,7 @@ const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children
           currentView={currentView}
           currentAdminSection={currentAdminSection}
           onAdminSectionChange={onAdminSectionChange}
+          onOpenAIHistory={onOpenAIHistory?.current || undefined}
         />
       )}
       {children}

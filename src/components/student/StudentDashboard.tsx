@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment, useEffect } from 'react';
+import { useState, useMemo, Fragment, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ import { ResultsPage } from './ResultsPage';
 import { ProfilePage } from './ProfilePage'; 
 import { StudentSidebar } from './StudentSidebar';
 import { StreamCarousel } from './StreamCarousel';
-import { AiAssistantScreen } from '../AiAssistant';
+import { AiAssistantScreen, AiAssistantScreenRef } from '../AiAssistant';
 
 import { Stream, Subject, Paper, Result, User, PracticeSection, PracticeSubject, Chapter, Difficulty } from '@/types';
 import { generateTestResultPDF, PDFReportData } from '@/utils/pdfGenerator';
@@ -68,16 +68,32 @@ interface StudentDashboardProps {
   notebookFolders: NotebookFolder[];
   onAddResult: (result: Result) => void;
   onProfileUpdate: () => void;
+  onOpenAIHistory?: () => void;
 }
-export function StudentDashboard({ user, streams, currentView, setCurrentView, onAddResult, notebookFolders, onProfileUpdate }: StudentDashboardProps) {
+export function StudentDashboard({ user, streams, currentView, setCurrentView, onAddResult, notebookFolders, onProfileUpdate, onOpenAIHistory }: StudentDashboardProps) {
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [currentResult, setCurrentResult] = useState<Result | null>(null);
+  const aiAssistantRef = useRef<AiAssistantScreenRef>(null);
   const [examStartTime, setExamStartTime] = useState<number>(0);
   const [selectedNotebookFolder, setSelectedNotebookFolder] = useState<NotebookFolder | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle opening AI history from header
+  const handleOpenAIHistory = () => {
+    if (aiAssistantRef.current) {
+      aiAssistantRef.current.openHistory();
+    }
+  };
+
+  // Pass the history function to parent component
+  useEffect(() => {
+    if (onOpenAIHistory) {
+      onOpenAIHistory.current = handleOpenAIHistory;
+    }
+  }, [onOpenAIHistory]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1186,7 +1202,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
               transition={{ duration: 0.3 }}
               className="flex-1"
             >
-              <AiAssistantScreen />
+              <AiAssistantScreen ref={aiAssistantRef} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { User, LogOut, Menu } from 'lucide-react';
+import { User, LogOut, Menu, History } from 'lucide-react';
 import { User as UserType } from '@/types';
 import { ViewState } from '../student/StudentDashboard';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -30,9 +30,10 @@ interface HeaderProps {
   currentView?: ViewState;
   currentAdminSection?: string;
   onAdminSectionChange?: (section: string) => void;
+  onOpenAIHistory?: () => void;
 }
 
-export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin, currentView, currentAdminSection, onAdminSectionChange }: HeaderProps) {
+export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory }: HeaderProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -57,15 +58,16 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
       )}
       <div className="container flex h-12 sm:h-16 items-center justify-between px-4">
         <div className="flex items-center space-x-4">
-          {/* Mobile hamburger menu */}
+          {/* Mobile hamburger menu and AI history button */}
           {isMobile ? (
-            <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open Menu</span>
-                </Button>
-              </SheetTrigger>
+            <div className="flex items-center space-x-2">
+              <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open Menu</span>
+                  </Button>
+                </SheetTrigger>
               <SheetContent side="left" className="w-3/4 sm:w-1/2 p-0 [&>button]:hidden">
                 <div className="p-4 border-b">
                   <h2 className="text-base font-semibold">Menu</h2>
@@ -95,6 +97,20 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
                 )}
               </SheetContent>
             </Sheet>
+            
+            {/* AI History Button - Only show on mobile when in AI Assistant view */}
+            {currentView === 'ai-assistant' && onOpenAIHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onOpenAIHistory}
+                className="h-8 w-8"
+              >
+                <History className="h-4 w-4" />
+                <span className="sr-only">Open AI Chat History</span>
+              </Button>
+            )}
+            </div>
           ) : (
             /* Desktop logo and title */
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onNavigate('streams')}>

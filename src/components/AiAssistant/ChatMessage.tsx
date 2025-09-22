@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { CodeBlock } from './CodeBlock';
+import { extractCodeBlocks } from '@/utils/codeBlockUtils';
 
 interface ChatMessageProps {
   id: string;
@@ -14,19 +18,23 @@ interface ChatMessageProps {
   isThinking?: boolean;
 }
 
+
 export function ChatMessage({ id, role, content, timestamp, className, isStreaming = false, isThinking = false }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const [contentBlocks, setContentBlocks] = useState<Array<{ type: 'text' | 'code', content: string, language?: string }>>([]);
 
   // Handle streaming content with smooth fade-in animation
   useEffect(() => {
     if (isStreaming) {
       setDisplayedContent(content);
+      setContentBlocks(extractCodeBlocks(content));
       setIsVisible(true);
     } else {
       // For non-streaming messages, show content immediately with fade-in
       setDisplayedContent(content);
+      setContentBlocks(extractCodeBlocks(content));
       setIsVisible(true);
     }
   }, [content, isStreaming]);
@@ -52,7 +60,7 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
     >
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-3 shadow-sm relative",
+          "max-w-[98%] sm:max-w-[80%] rounded-2xl px-4 py-3 shadow-sm relative w-full overflow-hidden",
           role === 'user'
             ? 'bg-primary text-primary-foreground'
             : 'bg-muted border'
@@ -72,12 +80,63 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
               <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
             </div>
           ) : (
-            <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">
-              {displayedContent}
-              {isStreaming && (
-                <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
-              )}
-            </p>
+            <div className="text-sm leading-relaxed sm:leading-relaxed leading-snug pr-8">
+              <div className={cn(
+                "transition-opacity duration-500 ease-in-out",
+                isVisible ? "opacity-100" : "opacity-0"
+              )}>
+                {contentBlocks.map((block, index) => {
+                  if (block.type === 'code') {
+                    // Only render code block if it has content
+                    if (block.content && block.content.trim()) {
+                      return (
+                        <CodeBlock
+                          key={index}
+                          code={block.content}
+                          language={block.language || 'text'}
+                        />
+                      );
+                    } else {
+                      return null;
+                    }
+                  } else {
+                    return (
+                      <div key={index} className="prose prose-sm max-w-none dark:prose-invert">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                            em: ({ children }) => <em className="italic">{children}</em>,
+                            code: ({ children }) => (
+                              <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+                                {children}
+                              </code>
+                            ),
+                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                            li: ({ children }) => <li className="text-sm">{children}</li>,
+                            h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-foreground">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-base font-bold mb-2 text-foreground">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-foreground">{children}</h3>,
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-4 border-muted-foreground/30 pl-3 italic my-2">
+                                {children}
+                              </blockquote>
+                            ),
+                          }}
+                        >
+                          {block.content}
+                        </ReactMarkdown>
+                      </div>
+                    );
+                  }
+                })}
+                {isStreaming && (
+                  <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
+                )}
+              </div>
+            </div>
           )}
         </div>
         <div className="flex items-center justify-between mt-2">

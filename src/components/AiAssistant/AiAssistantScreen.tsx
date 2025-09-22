@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { History, ArrowDown, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,10 @@ import { toast } from 'sonner';
 
 interface AiAssistantScreenProps {
   className?: string;
+}
+
+export interface AiAssistantScreenRef {
+  openHistory: () => void;
 }
 
 // Helper function to deduplicate repetitive content
@@ -84,7 +88,7 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length];
 }
 
-export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
+export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScreenProps>(({ className }, ref) => {
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -93,6 +97,7 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isUserScrolled, setIsUserScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -181,6 +186,16 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
   }, [messages.length]); // Re-attach when switching between empty and active states
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initialize session on component mount
   useEffect(() => {
@@ -374,19 +389,26 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
     toast.info('AI response stopped');
   };
 
+  // Expose the history opening function to parent component
+  useImperativeHandle(ref, () => ({
+    openHistory: () => setIsHistoryOpen(true)
+  }));
+
 
 
   return (
     <div className={cn("h-full w-full relative flex flex-col", className)}>
-      {/* History Button - Top Left */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsHistoryOpen(true)}
-        className="absolute top-4 left-4 h-8 w-8 rounded-full z-20"
-      >
-        <History className="h-4 w-4" />
-      </Button>
+      {/* History Button - Top Left (Desktop only) */}
+      {!isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsHistoryOpen(true)}
+          className="absolute top-4 left-4 h-8 w-8 rounded-full z-20"
+        >
+          <History className="h-4 w-4" />
+        </Button>
+      )}
 
 
       {/* Main Content Area - Account for fixed input */}
@@ -394,8 +416,8 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
         {/* Empty Chat State - Scrollable Layout */}
         {messages.length === 0 && !isLoading ? (
           <div className="relative h-full flex flex-col">
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar">
-               <div className="p-4 pb-8">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar overflow-x-hidden">
+               <div className="p-2 sm:p-4 pb-8">
                  <div className="text-center max-w-2xl mx-auto py-4">
                   {/* AI Avatar and Greeting */}
                   <div className="mb-4">
@@ -445,8 +467,8 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
         ) : (
           /* Scrollable Chat Messages Area - Active Chat State */
           <div className="relative h-full flex flex-col">
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar">
-              <div className="p-4 pb-32">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar overflow-x-hidden">
+              <div className="p-2 sm:p-4 pb-48 sm:pb-52">
                 <div className="mx-auto w-full max-w-4xl">
                   <div className="space-y-6">
                     {messages.map((message, index) => (
@@ -515,4 +537,5 @@ export function AiAssistantScreen({ className }: AiAssistantScreenProps) {
       />
     </div>
   );
-}
+});
+
