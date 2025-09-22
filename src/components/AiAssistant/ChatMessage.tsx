@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bot, User, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -12,9 +11,10 @@ interface ChatMessageProps {
   timestamp: Date;
   className?: string;
   isStreaming?: boolean;
+  isThinking?: boolean;
 }
 
-export function ChatMessage({ id, role, content, timestamp, className, isStreaming = false }: ChatMessageProps) {
+export function ChatMessage({ id, role, content, timestamp, className, isStreaming = false, isThinking = false }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
   const [isVisible, setIsVisible] = useState(false);
@@ -50,14 +50,6 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
         className
       )}
     >
-      {role === 'assistant' && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarFallback className="bg-primary/10">
-            <Bot className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
-      
       <div
         className={cn(
           "max-w-[80%] rounded-2xl px-4 py-3 shadow-sm relative",
@@ -70,12 +62,23 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
           "transition-opacity duration-500 ease-in-out",
           isVisible ? "opacity-100" : "opacity-0"
         )}>
-          <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">
-            {displayedContent}
-            {isStreaming && (
-              <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
-            )}
-          </p>
+          {isThinking ? (
+            <div className="flex items-center space-x-1">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
+              </div>
+              <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
+            </div>
+          ) : (
+            <p className="text-sm whitespace-pre-wrap leading-relaxed pr-8">
+              {displayedContent}
+              {isStreaming && (
+                <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
+              )}
+            </p>
+          )}
         </div>
         <div className="flex items-center justify-between mt-2">
           <p className="text-xs opacity-70">
@@ -84,7 +87,7 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
               minute: '2-digit' 
             })}
           </p>
-          {!isStreaming && (
+          {!isStreaming && !isThinking && (
             <Button
               variant="ghost"
               size="icon"
@@ -105,14 +108,6 @@ export function ChatMessage({ id, role, content, timestamp, className, isStreami
           )}
         </div>
       </div>
-      
-      {role === 'user' && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarFallback className="bg-secondary">
-            <User className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
     </div>
   );
 }

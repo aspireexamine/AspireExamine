@@ -9,7 +9,10 @@ import {
   Search,
   Clock,
   X,
-  Trash2
+  Trash2,
+  Edit2,
+  Check,
+  X as XIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { chatStorageService } from '@/services/chatStorageService';
@@ -26,9 +29,14 @@ interface ChatHistoryProps {
 export function ChatHistory({ isOpen, onClose, onSelectChat, onNewChat, className }: ChatHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     if (isOpen) {
+      // Clean up existing session titles first
+      chatStorageService.cleanupSessionTitles();
+      
       const sessions = chatStorageService.getSessions();
       setChatSessions(sessions);
     }
@@ -46,6 +54,33 @@ export function ChatHistory({ isOpen, onClose, onSelectChat, onNewChat, classNam
     if (diffInHours < 24) return `${diffInHours}h ago`;
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays}d ago`;
+  };
+
+  const handleEditStart = (sessionId: string, currentTitle: string) => {
+    setEditingSessionId(sessionId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleEditSave = () => {
+    if (editingSessionId && editingTitle.trim()) {
+      chatStorageService.updateSessionTitle(editingSessionId, editingTitle.trim());
+      setChatSessions(chatStorageService.getSessions());
+    }
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
+  const handleEditCancel = () => {
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleEditSave();
+    } else if (e.key === 'Escape') {
+      handleEditCancel();
+    }
   };
 
   if (!isOpen) return null;
@@ -114,7 +149,7 @@ export function ChatHistory({ isOpen, onClose, onSelectChat, onNewChat, classNam
                   <Card
                     key={chat.id}
                     className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.01] rounded-xl group"
-                    onClick={() => onSelectChat(chat.id)}
+                    onClick={() => !editingSessionId && onSelectChat(chat.id)}
                   >
                     <CardContent className="p-3">
                       <div className="flex items-start gap-3">
@@ -122,30 +157,89 @@ export function ChatHistory({ isOpen, onClose, onSelectChat, onNewChat, classNam
                           <MessageSquare className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm truncate">{chat.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {chat.messages[0]?.content || 'No messages'}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">
-                                {formatTimeAgo(chat.updatedAt)}
-                              </span>
+                          {editingSessionId === chat.id ? (
+                            // Edit mode
+                            <div className="space-y-2">
+                              <Input
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                onKeyDown={handleKeyPress}
+                                className="h-8 text-sm"
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditSave();
+                                  }}
+                                >
+                                  <Check className="h-3 w-3 text-green-600" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditCancel();
+                                  }}
+                                >
+                                  <XIcon className="h-3 w-3 text-red-600" />
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                chatStorageService.deleteSession(chat.id);
-                                setChatSessions(chatStorageService.getSessions());
-                              }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          ) : (
+                            // Normal mode
+                            <>
+                              <h4 className="font-medium text-sm truncate">{chat.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {chat.messages.length > 1 
+                                  ? `${chat.messages.length} messages` 
+                                  : chat.messages[0]?.content !== chat.title 
+                                    ? chat.messages[0]?.content || 'No messages'
+                                    : 'New conversation'
+                                }
+                              </p>
+                              <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatTimeAgo(chat.updatedAt)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditStart(chat.id, chat.title);
+                                    }}
+                                  >
+                                    <Edit2 className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      chatStorageService.deleteSession(chat.id);
+                                      setChatSessions(chatStorageService.getSessions());
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardContent>

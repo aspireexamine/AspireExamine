@@ -18,7 +18,7 @@ export const studentMenuItems = [
 
 export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkClick }: { currentView: string; onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant') => void; collapsed?: boolean; onLinkClick?: () => void; }) {
   return (
-    <nav className="flex flex-col gap-2 -mt-10 px-4">
+    <nav className="flex flex-col gap-2 mt-8 md:-mt-10 px-4">
       {studentMenuItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.id === 'streams'

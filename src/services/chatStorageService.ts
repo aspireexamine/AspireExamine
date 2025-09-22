@@ -82,14 +82,52 @@ class ChatStorageService {
     this.saveSession(session);
   }
 
+  // Update an existing message in a session
+  updateMessage(sessionId: string, messageId: string, updatedMessage: ChatMessage): void {
+    const session = this.getSession(sessionId);
+    if (!session) return;
+
+    const messageIndex = session.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex >= 0) {
+      session.messages[messageIndex] = updatedMessage;
+      session.updatedAt = new Date();
+      this.saveSession(session);
+    }
+  }
+
   // Update session title
   updateSessionTitle(sessionId: string, title: string): void {
     const session = this.getSession(sessionId);
     if (!session) return;
 
-    session.title = title;
+    // Check if title already exists and make it unique if needed
+    const uniqueTitle = this.makeTitleUnique(title, sessionId);
+    
+    session.title = uniqueTitle;
     session.updatedAt = new Date();
     this.saveSession(session);
+  }
+
+  // Make title unique by adding a number suffix if needed
+  private makeTitleUnique(title: string, excludeSessionId?: string): string {
+    const sessions = this.getSessions();
+    const existingTitles = sessions
+      .filter(session => session.id !== excludeSessionId)
+      .map(session => session.title);
+    
+    if (!existingTitles.includes(title)) {
+      return title;
+    }
+    
+    let counter = 1;
+    let uniqueTitle = `${title} (${counter})`;
+    
+    while (existingTitles.includes(uniqueTitle)) {
+      counter++;
+      uniqueTitle = `${title} (${counter})`;
+    }
+    
+    return uniqueTitle;
   }
 
   // Delete a chat session
@@ -123,6 +161,38 @@ class ChatStorageService {
         msg.content.toLowerCase().includes(lowercaseQuery)
       )
     );
+  }
+
+  // Clean up existing session titles by removing timestamps
+  cleanupSessionTitles(): void {
+    const sessions = this.getSessions();
+    let hasChanges = false;
+
+    const cleanedSessions = sessions.map(session => {
+      // Remove timestamp pattern like " (06:34 PM)" from titles
+      const cleanedTitle = session.title.replace(/\s*\(\d{1,2}:\d{2}\s*(AM|PM)\)$/i, '').trim();
+      
+      if (cleanedTitle !== session.title) {
+        hasChanges = true;
+        return {
+          ...session,
+          title: cleanedTitle,
+          updatedAt: new Date()
+        };
+      }
+      
+      return session;
+    });
+
+    if (hasChanges) {
+      // Save the cleaned sessions back to localStorage
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cleanedSessions));
+        console.log('Cleaned up chat session titles');
+      } catch (error) {
+        console.error('Failed to clean up session titles:', error);
+      }
+    }
   }
 }
 

@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Send, 
   Paperclip, 
-  Loader2
+  Square
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+  onStopAI?: () => void;
   isLoading?: boolean;
   placeholder?: string;
   className?: string;
@@ -20,6 +21,7 @@ interface ChatInputProps {
 
 export function ChatInput({ 
   onSendMessage, 
+  onStopAI,
   isLoading = false, 
   placeholder = "Ask, search, or make anything...",
   className,
@@ -47,12 +49,12 @@ export function ChatInput({
   ];
 
   return (
-    <div className={cn("w-full max-w-3xl", className)}>
+    <div className={cn("w-full", className)}>
       <Card className="border-2 shadow-sm rounded-2xl">
-        <CardContent className="p-4">
-          {/* Add Context Button */}
-          <div className="mb-3">
-            <Button variant="outline" size="sm" className="h-7 px-3 text-xs rounded-full">
+        <CardContent className={cn("p-4", isCompact && "p-3")}>
+          {/* Add Context Button - Top Left */}
+          <div className="flex justify-start mb-3">
+            <Button variant="outline" size="sm" className={cn("h-7 px-3 text-xs rounded-full", isCompact && "h-6 px-2 text-xs")}>
               @ Add context
             </Button>
           </div>
@@ -73,7 +75,7 @@ export function ChatInput({
           </div>
 
           {/* Bottom Controls */}
-          <div className="flex items-center justify-between mt-4">
+          <div className={cn("flex items-center justify-between mt-4", isCompact && "mt-3")}>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                 <Paperclip className="h-4 w-4" />
@@ -93,13 +95,16 @@ export function ChatInput({
             </div>
             
             <Button 
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              onClick={isLoading ? onStopAI : handleSendMessage}
+              disabled={!isLoading && !inputValue.trim()}
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className={cn(
+                "h-8 w-8 rounded-full",
+                isLoading && "bg-red-500 hover:bg-red-600 text-white"
+              )}
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Square className="h-4 w-4" />
               ) : (
                 <Send className="h-4 w-4" />
               )}

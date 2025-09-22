@@ -216,3 +216,29 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Force visible scrollbar for AI Assistant */
+.ai-chat-scrollbar::-webkit-scrollbar {
+  width: 12px;
+  display: block !important;
+}
+
+.ai-chat-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 6px;
+}
+
+.ai-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 6px;
+  border: 2px solid hsl(var(--muted));
+}
+
+.ai-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+.ai-chat-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: hsl(var(--border)) hsl(var(--muted));
+}

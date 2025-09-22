@@ -103,7 +103,7 @@ class AIChatService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages,
         temperature: 0.7,
         max_tokens: 1024,
@@ -198,13 +198,13 @@ class AIChatService {
     throw new Error(`All AI providers failed. Errors: ${errors.join('; ')}`);
   }
 
-  async *sendMessageStream(message: string, conversationHistory: ChatMessage[] = []): AsyncGenerator<string, void, unknown> {
+  async *sendMessageStream(message: string, conversationHistory: ChatMessage[] = [], abortSignal?: AbortSignal): AsyncGenerator<string, void, unknown> {
     const keys = await this.getAPIKeys();
     
     // Try streaming with Groq first (best streaming support)
     if (keys.groq) {
       try {
-        yield* this.tryGroqStream(message, conversationHistory);
+        yield* this.tryGroqStream(message, conversationHistory, abortSignal);
         return;
       } catch (error) {
         console.warn('Groq streaming failed, falling back to regular response:', error);
@@ -227,7 +227,7 @@ class AIChatService {
     }
   }
 
-  private async *tryGroqStream(message: string, conversationHistory: ChatMessage[] = []): AsyncGenerator<string, void, unknown> {
+  private async *tryGroqStream(message: string, conversationHistory: ChatMessage[] = [], abortSignal?: AbortSignal): AsyncGenerator<string, void, unknown> {
     const keys = await this.getAPIKeys();
     const key = keys.groq;
     if (!key) throw new Error('Groq API key not configured');
@@ -251,12 +251,13 @@ class AIChatService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages,
         temperature: 0.7,
         max_tokens: 1024,
         stream: true
-      })
+      }),
+      signal: abortSignal
     });
 
     if (!response.ok) {
@@ -290,6 +291,7 @@ class AIChatService {
               const parsed = JSON.parse(data);
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
+                // console.log('Groq streaming chunk:', content);
                 yield content;
               }
             } catch (e) {
@@ -304,9 +306,17 @@ class AIChatService {
   }
 
   generateChatTitle(firstMessage: string): string {
-    // Simple title generation based on first message
+    // Generate a clean title based on first message
     const words = firstMessage.split(' ').slice(0, 6);
-    return words.join(' ').replace(/[^\w\s]/g, '') || 'New Chat';
+    let baseTitle = words.join(' ').replace(/[^\w\s]/g, '') || 'New Chat';
+    
+    // Clean up the title and capitalize first letter
+    baseTitle = baseTitle.trim();
+    if (baseTitle.length > 0) {
+      baseTitle = baseTitle.charAt(0).toUpperCase() + baseTitle.slice(1);
+    }
+    
+    return baseTitle;
   }
 }
 
