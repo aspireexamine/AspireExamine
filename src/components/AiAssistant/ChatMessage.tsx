@@ -1,12 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
+'use client';
+
+import { useState, useRef, useMemo, memo } from 'react';
+import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CodeBlock } from './CodeBlock';
-import { extractCodeBlocks } from '@/utils/codeBlockUtils';
+import html2canvas from 'html2canvas';
+import { Button } from '@/components/ui/button';
+import { MessageAttachments } from './MessageAttachments';
+import { AIChatMessage } from '@/services/aiChatService';
+import CodeBlock from './CodeBlock';
+import {
+  Copy,
+  Check,
+  Sparkles,
+  Download,
+  FileDown,
+} from 'lucide-react';
+import { PluggableList } from 'unified';
+import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
   id: string;
@@ -16,157 +26,162 @@ interface ChatMessageProps {
   className?: string;
   isStreaming?: boolean;
   isThinking?: boolean;
+  files?: any[];
+  isLastMessage?: boolean;
+  onOpenFileInCanvas?: (fileId: string) => void;
+  supportsReasoning?: boolean;
 }
 
-
-export function ChatMessage({ id, role, content, timestamp, className, isStreaming = false, isThinking = false }: ChatMessageProps) {
+const ChatMessageComponent = ({ 
+  id, 
+  role, 
+  content, 
+  timestamp, 
+  className, 
+  isStreaming = false, 
+  isThinking = false,
+  files = [],
+  isLastMessage = false,
+  onOpenFileInCanvas,
+  supportsReasoning = false
+}: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
-  const [displayedContent, setDisplayedContent] = useState('');
-  const [isVisible, setIsVisible] = useState(false);
-  const [contentBlocks, setContentBlocks] = useState<Array<{ type: 'text' | 'code', content: string, language?: string }>>([]);
+  const messageContentRef = useRef<HTMLDivElement>(null);
 
-  // Handle streaming content with smooth fade-in animation
-  useEffect(() => {
-    if (isStreaming) {
-      setDisplayedContent(content);
-      setContentBlocks(extractCodeBlocks(content));
-      setIsVisible(true);
-    } else {
-      // For non-streaming messages, show content immediately with fade-in
-      setDisplayedContent(content);
-      setContentBlocks(extractCodeBlocks(content));
-      setIsVisible(true);
-    }
-  }, [content, isStreaming]);
+  const attachedFiles = useMemo(() => files || [], [files]);
 
-  const handleCopy = async () => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success('Message copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy message');
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
     }
   };
 
+  const downloadAsMarkdown = () => {
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Aspire-response.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsPng = () => {
+    if (messageContentRef.current) {
+      html2canvas(messageContentRef.current, {
+        backgroundColor: null,
+        useCORS: true,
+      }).then(canvas => {
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Aspire-response.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    }
+  };
+
+  const formatTime = (timestamp: Date) => {
+    return timestamp.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const showThinkingAnimation = isLastMessage && isThinking && role === 'assistant';
+
+  const customComponents: Components = {
+    p(props) {
+      return <p {...props} className="mb-2 last:mb-0 leading-relaxed" />;
+    },
+    code(props) {
+      const { children, className, ...rest } = props;
+      const match = /language-(\w+)/.exec(className || '');
+      const codeText = String(children).replace(/\n$/, '');
+
+      return match ? (
+        <CodeBlock language={match[1]} value={codeText} />
+      ) : (
+        <code {...rest} className="bg-muted px-1 py-0.5 rounded-sm">
+          {children}
+        </code>
+      );
+    },
+  };
+
   return (
-    <div
-      className={cn(
-        "flex gap-3 animate-in slide-in-from-bottom-2 duration-300 group",
-        role === 'user' ? 'justify-end' : 'justify-start',
-        className
-      )}
-    >
-      <div
-        className={cn(
-          "max-w-[98%] sm:max-w-[80%] rounded-2xl px-4 py-3 shadow-sm relative w-full overflow-hidden",
+    <div className={`group flex ${role === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex-1 space-y-2 min-w-0 max-w-full md:max-w-[85%] ${role === 'user' ? 'text-right' : ''}`}>
+        <div className={`inline-block max-w-full ${ 
           role === 'user'
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted border'
+            ? 'bg-muted text-foreground rounded-2xl rounded-tr-md px-4 py-3'
+            : ''
+        }`}>
+          {attachedFiles.length > 0 && <MessageAttachments files={attachedFiles} />}
+
+          {/* Show thinking animation when AI is processing */}
+          {role === 'assistant' && isLastMessage && isThinking && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Sparkles className="h-5 w-5 animate-pulse" />
+              <span>Thinking...</span>
+            </div>
+          )}
+
+          <div ref={messageContentRef} className="text-left message-content">
+            {role === 'user' ? (
+              <p className="whitespace-pre-wrap">{content}</p>
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm] as PluggableList}
+                components={customComponents}
+              >
+                {content}
+              </ReactMarkdown>
+            )}
+          </div>
+        </div>
+
+        {!showThinkingAnimation && (
+          <div className={`flex items-center gap-2 text-xs text-muted-foreground ${ 
+            role === 'user' ? 'justify-end' : 'justify-start'
+          }`}>
+            {role === 'user' && (
+              <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(content)}>
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                </Button>
+              </div>
+            )}
+
+            <span>{formatTime(timestamp)}</span>
+
+            {role === 'assistant' && !isStreaming && (
+              <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(content)}>
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadAsMarkdown}>
+                  <FileDown className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadAsPng}>
+                  <Download className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
         )}
-      >
-        <div className={cn(
-          "transition-opacity duration-500 ease-in-out",
-          isVisible ? "opacity-100" : "opacity-0"
-        )}>
-          {isThinking ? (
-            <div className="flex items-center space-x-1">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
-              </div>
-              <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
-            </div>
-          ) : (
-            <div className="text-sm leading-relaxed sm:leading-relaxed leading-snug pr-8">
-              <div className={cn(
-                "transition-opacity duration-500 ease-in-out",
-                isVisible ? "opacity-100" : "opacity-0"
-              )}>
-                {contentBlocks.map((block, index) => {
-                  if (block.type === 'code') {
-                    // Only render code block if it has content
-                    if (block.content && block.content.trim()) {
-                      return (
-                        <CodeBlock
-                          key={index}
-                          code={block.content}
-                          language={block.language || 'text'}
-                        />
-                      );
-                    } else {
-                      return null;
-                    }
-                  } else {
-                    return (
-                      <div key={index} className="prose prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown 
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                            em: ({ children }) => <em className="italic">{children}</em>,
-                            code: ({ children }) => (
-                              <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-                                {children}
-                              </code>
-                            ),
-                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                            li: ({ children }) => <li className="text-sm">{children}</li>,
-                            h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-foreground">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-base font-bold mb-2 text-foreground">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-foreground">{children}</h3>,
-                            blockquote: ({ children }) => (
-                              <blockquote className="border-l-4 border-muted-foreground/30 pl-3 italic my-2">
-                                {children}
-                              </blockquote>
-                            ),
-                          }}
-                        >
-                          {block.content}
-                        </ReactMarkdown>
-                      </div>
-                    );
-                  }
-                })}
-                {isStreaming && (
-                  <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-xs opacity-70">
-            {timestamp.toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}
-          </p>
-          {!isStreaming && !isThinking && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCopy}
-              className={cn(
-                "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
-                role === 'user' 
-                  ? 'text-primary-foreground hover:bg-primary-foreground/20' 
-                  : 'text-muted-foreground hover:bg-muted-foreground/20'
-              )}
-            >
-              {copied ? (
-                <Check className="h-3 w-3" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );
-}
+};
+
+export const ChatMessage = memo(ChatMessageComponent);
+export default ChatMessage;

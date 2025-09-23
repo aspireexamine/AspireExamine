@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { User, LogOut, Menu, History } from 'lucide-react';
+import { User, LogOut, Menu, History, FolderOpen } from 'lucide-react';
 import { User as UserType } from '@/types';
 import { ViewState } from '../student/StudentDashboard';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -31,9 +31,10 @@ interface HeaderProps {
   currentAdminSection?: string;
   onAdminSectionChange?: (section: string) => void;
   onOpenAIHistory?: () => void;
+  onOpenAIFiles?: () => void;
 }
 
-export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory }: HeaderProps) {
+export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, onReturnToAdmin, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory, onOpenAIFiles }: HeaderProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -56,15 +57,15 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
           </Button>
         </div>
       )}
-      <div className="container flex h-12 sm:h-16 items-center justify-between px-4">
-        <div className="flex items-center space-x-4">
-          {/* Mobile hamburger menu and AI history button */}
+      <div className="container flex h-12 sm:h-16 items-center justify-between px-2">
+        <div className="flex items-center space-x-2">
+          {/* Mobile hamburger menu, AI history, and files buttons */}
           {isMobile ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
-                    <Menu className="h-6 w-6" />
+                  <Button variant="ghost" size="icon" className="hamburger-menu-button h-10 w-10 !h-10 !w-10">
+                    <Menu className="h-6 w-6 !h-6 !w-6" />
                     <span className="sr-only">Open Menu</span>
                   </Button>
                 </SheetTrigger>
@@ -98,17 +99,32 @@ export function Header({ user, onLogout, onNavigate, isAdminViewingAsStudent, on
               </SheetContent>
             </Sheet>
             
-            {/* AI History Button - Only show on mobile when in AI Assistant view */}
-            {currentView === 'ai-assistant' && onOpenAIHistory && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onOpenAIHistory}
-                className="h-8 w-8"
-              >
-                <History className="h-4 w-4" />
-                <span className="sr-only">Open AI Chat History</span>
-              </Button>
+            {/* AI History and Files Buttons - Only show on mobile when in AI Assistant view */}
+            {currentView === 'ai-assistant' && (
+              <div className="flex items-center space-x-1">
+                {onOpenAIHistory && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onOpenAIHistory}
+                    className="h-8 w-8"
+                  >
+                    <History className="h-4 w-4" />
+                    <span className="sr-only">Open AI Chat History</span>
+                  </Button>
+                )}
+                {onOpenAIFiles && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onOpenAIFiles}
+                    className="h-8 w-8"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    <span className="sr-only">Open AI Files Panel</span>
+                  </Button>
+                )}
+              </div>
             )}
             </div>
           ) : (

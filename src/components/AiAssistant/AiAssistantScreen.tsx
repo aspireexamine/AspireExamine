@@ -1,103 +1,112 @@
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import { History, ArrowDown, Bot } from 'lucide-react';
+import { History, ArrowDown, Bot, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
+import { FilesPanel } from './FilesPanel';
 import { SuggestedActions } from './SuggestedActions';
 import { ChatHistory } from './ChatHistory';
 import { aiChatService, ChatMessage as AIChatMessage } from '@/services/aiChatService';
 import { chatStorageService } from '@/services/chatStorageService';
+import { mockProviders } from '@/lib/providers/base';
 import { toast } from 'sonner';
 
 interface AiAssistantScreenProps {
   className?: string;
+  initialMessage?: string;
 }
 
 export interface AiAssistantScreenRef {
   openHistory: () => void;
+  openFiles: () => void;
 }
 
-// Helper function to deduplicate repetitive content
-function deduplicateContent(content: string): string {
-  // Remove obvious repetitive patterns like "answer 12" followed by "answer 1+2"
-  // This is a simple approach - can be enhanced based on specific patterns
-  
-  // Split into lines and remove duplicate consecutive lines
-  const lines = content.split('\n');
-  const deduplicatedLines: string[] = [];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const currentLine = lines[i].trim();
-    const previousLine = i > 0 ? lines[i - 1].trim() : '';
-    
-    // Skip if current line is very similar to previous line (with minor variations)
-    if (currentLine && currentLine !== previousLine) {
-      // Check for patterns like "answer 12" vs "answer 1+2"
-      if (previousLine && currentLine.length > 10) {
-        const similarity = calculateSimilarity(previousLine, currentLine);
-        if (similarity < 0.8) { // Less than 80% similar
-          deduplicatedLines.push(lines[i]);
-        }
-      } else {
-        deduplicatedLines.push(lines[i]);
-      }
-    }
-  }
-  
-  return deduplicatedLines.join('\n');
-}
 
-// Simple similarity calculation
-function calculateSimilarity(str1: string, str2: string): number {
-  const longer = str1.length > str2.length ? str1 : str2;
-  const shorter = str1.length > str2.length ? str2 : str1;
-  
-  if (longer.length === 0) return 1.0;
-  
-  const distance = levenshteinDistance(longer, shorter);
-  return (longer.length - distance) / longer.length;
-}
 
-// Levenshtein distance calculation
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = [];
-  
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i];
-  }
-  
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-  
-  return matrix[str2.length][str1.length];
-}
 
-export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScreenProps>(({ className }, ref) => {
+export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScreenProps>(({ className, initialMessage }, ref) => {
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [showGetStarted, setShowGetStarted] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isUserScrolled, setIsUserScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [text, setText] = useState('');
+  const [currentModel, setCurrentModel] = useState('openai:gpt-4');
+  
+  // Collect all files from messages for the FilesPanel
+  const getAllFilesFromMessages = () => {
+    const allFiles: any[] = [];
+    
+    messages.forEach(message => {
+      if (message.attachments) {
+        message.attachments.forEach(fileId => {
+          const fileData = sessionStorage.getItem(`file_${fileId}`);
+          if (fileData) {
+            const parsed = JSON.parse(fileData);
+            
+            // Determine the display type for the FilesPanel
+            let displayType = parsed.type;
+            if (parsed.type === 'binary') {
+              // For binary files, use the MIME type if available, otherwise infer from extension
+              displayType = parsed.mimeType || getMimeTypeFromExtension(parsed.name);
+            }
+            
+            // Convert our file format to FilesPanel format
+            allFiles.push({
+              id: fileId,
+              name: parsed.name,
+              type: displayType,
+              size: parsed.size || 0,
+              createdAt: new Date(parsed.uploadedAt || parsed.extractedAt || Date.now()).getTime(),
+              blobId: fileId,
+              thumbUrl: parsed.type === 'image' ? parsed.data : undefined,
+              textSnippet: (parsed.type === 'text' || parsed.type === 'pdf' || parsed.type === 'binary') ? 
+                (parsed.content?.substring(0, 100) + (parsed.content?.length > 100 ? '...' : '')) : 
+                undefined,
+              // Store original data for compatibility
+              originalData: parsed
+            });
+          }
+        });
+      }
+    });
+    
+    return allFiles;
+  };
+
+  const getMimeTypeFromExtension = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      'js': 'application/javascript',
+      'ts': 'application/typescript',
+      'jsx': 'application/javascript',
+      'tsx': 'application/typescript',
+      'json': 'application/json',
+      'py': 'text/x-python',
+      'java': 'text/x-java-source',
+      'cpp': 'text/x-c++',
+      'c': 'text/x-c',
+      'css': 'text/css',
+      'html': 'text/html',
+      'xml': 'application/xml',
+      'yaml': 'application/x-yaml',
+      'yml': 'application/x-yaml',
+      'sql': 'application/sql',
+      'sh': 'application/x-sh',
+      'bash': 'application/x-sh',
+      'md': 'text/markdown',
+      'txt': 'text/plain'
+    };
+    
+    return mimeTypes[extension || ''] || 'application/octet-stream';
+  };
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -207,6 +216,16 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
     // This prevents the screen from automatically shifting to a previous chat
   }, []);
 
+  // Handle initial message
+  useEffect(() => {
+    if (initialMessage && initialMessage.trim()) {
+      // Set the initial message in the text input
+      setText(initialMessage);
+      // Automatically send the message
+      handleSendMessage(initialMessage.trim(), false);
+    }
+  }, [initialMessage]);
+
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
@@ -219,7 +238,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
     };
   }, []);
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, _isCanvasMode: boolean, attachmentIds?: string[]) => {
     if (!message.trim() || isLoading) return;
 
     const userMessage: AIChatMessage = {
@@ -227,6 +246,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
       role: 'user',
       content: message.trim(),
       timestamp: new Date(),
+      attachments: attachmentIds,
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -234,6 +254,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
     setIsThinking(true);
     setShowGetStarted(false);
     setIsUserScrolled(false); // Reset user scroll state for new conversation
+    setText(''); // Clear input text
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController();
@@ -270,7 +291,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
       let fullResponse = '';
       let hasStartedStreaming = false;
       
-      for await (const chunk of aiChatService.sendMessageStream(message.trim(), messages, abortControllerRef.current?.signal)) {
+      for await (const chunk of aiChatService.sendMessageStream(message.trim(), messages, attachmentIds || [], abortControllerRef.current?.signal)) {
         // Check if request was aborted
         if (abortControllerRef.current?.signal.aborted) {
           break;
@@ -281,19 +302,11 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
           // Add AI message to UI when streaming starts
           setMessages(prev => {
             const updated = [...prev, aiMessage];
-            // console.log('Adding AI message to UI:', aiMessage.id, 'Total messages:', updated.length);
             return updated;
           });
         }
         
         fullResponse += chunk;
-        
-        // Basic deduplication: remove obvious repetitive patterns
-        fullResponse = deduplicateContent(fullResponse);
-        
-        // Debug: Log chunk and full response to identify duplication
-        // console.log('Chunk received:', chunk);
-        // console.log('Full response so far:', fullResponse);
         
         // Update the AI message with streaming content
         const updatedAiMessage = { ...aiMessage, content: fullResponse };
@@ -307,11 +320,11 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
         chatStorageService.updateMessage(sessionId, aiMessageId, updatedAiMessage);
       }
 
-      // Finalize the AI message with deduplication
+      // Finalize the AI message
       const finalAiMessage: AIChatMessage = {
         id: aiMessageId,
         role: 'assistant',
-        content: deduplicateContent(fullResponse),
+        content: fullResponse,
         timestamp: new Date(),
       };
 
@@ -347,9 +360,224 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
 
   const handleSuggestedAction = (action: any) => {
     if (action.prompt) {
-      handleSendMessage(action.prompt);
+      // Set the prompt text in the input area instead of auto-sending
+      setText(action.prompt);
     }
-    setShowGetStarted(false);
+    // Don't close the Get Started section - let it stay visible until user sends message
+  };
+
+  const handleFileUpload = async (files: File[]): Promise<string[]> => {
+    const fileIds: string[] = [];
+    
+    for (const file of files) {
+      try {
+        // Process different file types
+        if (file.type === 'application/pdf') {
+          // Use existing PDF processing
+          const fileId = await processPDFFile(file);
+          fileIds.push(fileId);
+        } else if (file.type.startsWith('image/')) {
+          // Process image files
+          const fileId = await processImageFile(file);
+          fileIds.push(fileId);
+        } else if (file.type.startsWith('text/') || isTextBasedFile(file)) {
+          // Process text files and text-based files (code, json, etc.)
+          const fileId = await processTextFile(file);
+          fileIds.push(fileId);
+        } else {
+          // For other file types, process as binary/generic files
+          const fileId = await processGenericFile(file);
+          fileIds.push(fileId);
+        }
+      } catch (error) {
+        console.error(`Failed to process file ${file.name}:`, error);
+        toast.error(`Failed to process ${file.name}`);
+      }
+    }
+    
+    return fileIds;
+  };
+
+  const processPDFFile = async (file: File): Promise<string> => {
+    // Use the existing PDF extraction service
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch('/api/supabase/functions/extract-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to extract PDF text');
+      }
+      
+      const result = await response.json();
+      const fileId = `pdf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store the extracted text for later use
+      // In a real implementation, you'd store this in a database or cache
+      sessionStorage.setItem(`file_${fileId}`, JSON.stringify({
+        type: 'pdf',
+        name: file.name,
+        content: result.text,
+        extractedAt: new Date().toISOString()
+      }));
+      
+      return fileId;
+    } catch (error) {
+      console.error('PDF processing error:', error);
+      throw error;
+    }
+  };
+
+  const processImageFile = async (file: File): Promise<string> => {
+    // Convert image to base64 for AI processing
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store the image data
+        sessionStorage.setItem(`file_${fileId}`, JSON.stringify({
+          type: 'image',
+          name: file.name,
+          mimeType: file.type,
+          data: reader.result,
+          uploadedAt: new Date().toISOString()
+        }));
+        
+        resolve(fileId);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const processTextFile = async (file: File): Promise<string> => {
+    // Read text file content
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileId = `txt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store the text content
+        sessionStorage.setItem(`file_${fileId}`, JSON.stringify({
+          type: 'text',
+          name: file.name,
+          content: reader.result,
+          uploadedAt: new Date().toISOString()
+        }));
+        
+        resolve(fileId);
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  const processGenericFile = async (file: File): Promise<string> => {
+    // Process any file type as binary data
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store the file data
+        sessionStorage.setItem(`file_${fileId}`, JSON.stringify({
+          type: 'binary',
+          name: file.name,
+          mimeType: file.type,
+          size: file.size,
+          data: reader.result, // Base64 encoded data
+          uploadedAt: new Date().toISOString()
+        }));
+        
+        resolve(fileId);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file); // This will encode as base64
+    });
+  };
+
+  const isTextBasedFile = (file: File): boolean => {
+    // Check if file is text-based by extension
+    const textExtensions = [
+      'txt', 'md', 'json', 'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'h',
+      'css', 'html', 'htm', 'xml', 'yaml', 'yml', 'sql', 'sh', 'bash', 'ps1',
+      'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'r', 'm', 'pl', 'lua',
+      'vim', 'vimrc', 'gitignore', 'gitattributes', 'dockerfile', 'makefile',
+      'cmake', 'gradle', 'pom', 'sbt', 'gemfile', 'rakefile', 'gulpfile',
+      'webpack', 'babel', 'eslint', 'prettier', 'editorconfig', 'env',
+      'log', 'csv', 'tsv', 'ini', 'cfg', 'conf', 'config', 'properties'
+    ];
+    
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    return extension ? textExtensions.includes(extension) : false;
+  };
+
+  const handleStopGenerating = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsLoading(false);
+    setIsThinking(false);
+    toast.info('AI response stopped');
+  };
+
+  const handleEnhancePrompt = async () => {
+    if (!text.trim()) {
+      toast.error('Please enter some text to enhance');
+      return;
+    }
+
+    setIsEnhancing(true);
+    try {
+      const enhancedText = await aiChatService.enhancePrompt(text.trim());
+      setText(enhancedText);
+      toast.success('Prompt enhanced successfully');
+    } catch (error) {
+      console.error('Prompt enhancement failed:', error);
+      toast.error('Failed to enhance prompt. Please try again.');
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setCurrentModel(modelId);
+  };
+
+  const handleFileRemove = (fileId: string) => {
+    // Remove from sessionStorage
+    sessionStorage.removeItem(`file_${fileId}`);
+    
+    // Update messages to remove the file reference
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      attachments: msg.attachments?.filter(id => id !== fileId)
+    })));
+    
+    // Update current session if it exists
+    if (currentSessionId) {
+      const session = chatStorageService.getSession(currentSessionId);
+      if (session) {
+        session.messages = session.messages.map(msg => ({
+          ...msg,
+          attachments: msg.attachments?.filter(id => id !== fileId)
+        }));
+        chatStorageService.saveSession(session);
+      }
+    }
+    
+    toast.success('File removed');
+  };
+
+  const handleFileSelect = (fileId: string) => {
+    // This function is now handled by the FilesPanel component
+    // The FilePreviewModal will be opened from within the FilesPanel
+    console.log('File selected:', fileId);
   };
 
   const handleSelectChat = (chatId: string) => {
@@ -375,23 +603,11 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
     setIsHistoryOpen(false);
   };
 
-  const handleStopAI = () => {
-    // Abort the current AI request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Reset states
-    setIsLoading(false);
-    setIsThinking(false);
-    
-    // Show toast notification
-    toast.info('AI response stopped');
-  };
 
-  // Expose the history opening function to parent component
+  // Expose the history and files opening functions to parent component
   useImperativeHandle(ref, () => ({
-    openHistory: () => setIsHistoryOpen(true)
+    openHistory: () => setIsHistoryOpen(true),
+    openFiles: () => setIsFilesOpen(true)
   }));
 
 
@@ -410,6 +626,17 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
         </Button>
       )}
 
+      {/* Files Button - Top Right (Desktop only) */}
+      {!isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsFilesOpen(true)}
+          className="absolute top-4 right-4 h-8 w-8 rounded-full z-20"
+        >
+          <FolderOpen className="h-4 w-4" />
+        </Button>
+      )}
 
       {/* Main Content Area - Account for fixed input */}
       <div className="w-full flex flex-col h-[calc(100vh-40px)]">
@@ -433,10 +660,17 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
                   <div className="mb-6">
                     <ChatInput
                       onSendMessage={handleSendMessage}
-                      onStopAI={handleStopAI}
-                      isLoading={isLoading}
-                      placeholder="Ask, search, or make anything..."
-                      isCompact={false}
+                      onFileUpload={handleFileUpload}
+                      onStopGenerating={handleStopGenerating}
+                      isStreaming={isLoading}
+                      currentModel={currentModel}
+                      onModelChange={handleModelChange}
+                      providers={mockProviders}
+                      text={text}
+                      onTextChange={setText}
+                      onEnhancePrompt={handleEnhancePrompt}
+                      isEnhancing={isEnhancing}
+                      isSummarizing={false}
                     />
                   </div>
 
@@ -457,7 +691,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
             {showScrollButton && (
               <Button
                 onClick={handleScrollToBottom}
-                className="absolute bottom-4 right-4 h-10 w-10 rounded-full shadow-lg z-[60]"
+                className="absolute bottom-16 right-4 h-10 w-10 rounded-full shadow-lg z-[60]"
                 size="icon"
               >
                 <ArrowDown className="h-4 w-4" />
@@ -470,7 +704,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto ai-chat-scrollbar overflow-x-hidden">
               <div className="p-2 sm:p-4 pb-48 sm:pb-52">
                 <div className="mx-auto w-full max-w-4xl">
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {messages.map((message, index) => (
                       <ChatMessage
                         key={message.id}
@@ -479,6 +713,10 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
                         content={message.content}
                         timestamp={message.timestamp}
                         isStreaming={message.role === 'assistant' && index === messages.length - 1 && isLoading && !isThinking}
+                        files={message.attachments ? message.attachments.map(id => {
+                          const fileData = sessionStorage.getItem(`file_${id}`);
+                          return fileData ? JSON.parse(fileData) : null;
+                        }).filter(Boolean) : []}
                       />
                     ))}
                     
@@ -503,7 +741,7 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
             {showScrollButton && (
               <Button
                 onClick={handleScrollToBottom}
-                className="absolute bottom-4 right-4 h-10 w-10 rounded-full shadow-lg z-[60]"
+                className="absolute bottom-16 right-4 h-10 w-10 rounded-full shadow-lg z-[60]"
                 size="icon"
               >
                 <ArrowDown className="h-4 w-4" />
@@ -519,10 +757,17 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
           <div className="max-w-4xl mx-auto p-4">
             <ChatInput
               onSendMessage={handleSendMessage}
-              onStopAI={handleStopAI}
-              isLoading={isLoading}
-              placeholder="Ask, search, or make anything..."
-              isCompact={true}
+              onFileUpload={handleFileUpload}
+              onStopGenerating={handleStopGenerating}
+              isStreaming={isLoading}
+              currentModel={currentModel}
+              onModelChange={handleModelChange}
+              providers={mockProviders}
+              text={text}
+              onTextChange={setText}
+              onEnhancePrompt={handleEnhancePrompt}
+              isEnhancing={isEnhancing}
+              isSummarizing={false}
             />
           </div>
         </div>
@@ -534,6 +779,15 @@ export const AiAssistantScreen = forwardRef<AiAssistantScreenRef, AiAssistantScr
         onClose={() => setIsHistoryOpen(false)}
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
+      />
+
+      {/* Files Panel Sidebar */}
+      <FilesPanel
+        files={getAllFilesFromMessages()}
+        onFileRemove={handleFileRemove}
+        onFileSelect={handleFileSelect}
+        isOpen={isFilesOpen}
+        onClose={() => setIsFilesOpen(false)}
       />
     </div>
   );

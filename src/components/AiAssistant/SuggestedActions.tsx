@@ -85,7 +85,7 @@ export function SuggestedActions({
   className 
 }: SuggestedActionsProps) {
   return (
-    <div className={cn("w-full max-w-3xl", className)}>
+    <div className={cn("w-full", className)}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-foreground">Get started</h3>
         {showCloseButton && onClose && (

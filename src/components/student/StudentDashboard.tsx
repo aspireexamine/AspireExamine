@@ -68,9 +68,10 @@ interface StudentDashboardProps {
   notebookFolders: NotebookFolder[];
   onAddResult: (result: Result) => void;
   onProfileUpdate: () => void;
-  onOpenAIHistory?: () => void;
+  onOpenAIHistory?: React.MutableRefObject<(() => void) | null>;
+  onOpenAIFiles?: React.MutableRefObject<(() => void) | null>;
 }
-export function StudentDashboard({ user, streams, currentView, setCurrentView, onAddResult, notebookFolders, onProfileUpdate, onOpenAIHistory }: StudentDashboardProps) {
+export function StudentDashboard({ user, streams, currentView, setCurrentView, onAddResult, notebookFolders, onProfileUpdate, onOpenAIHistory, onOpenAIFiles }: StudentDashboardProps) {
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
@@ -80,6 +81,8 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
   const [examStartTime, setExamStartTime] = useState<number>(0);
   const [selectedNotebookFolder, setSelectedNotebookFolder] = useState<NotebookFolder | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [aiPromptText, setAiPromptText] = useState('');
+  const [initialAiMessage, setInitialAiMessage] = useState<string | undefined>(undefined);
 
   // Handle opening AI history from header
   const handleOpenAIHistory = () => {
@@ -88,12 +91,22 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     }
   };
 
-  // Pass the history function to parent component
+  // Handle opening AI files from header
+  const handleOpenAIFiles = () => {
+    if (aiAssistantRef.current) {
+      aiAssistantRef.current.openFiles();
+    }
+  };
+
+  // Pass the history and files functions to parent component
   useEffect(() => {
     if (onOpenAIHistory) {
       onOpenAIHistory.current = handleOpenAIHistory;
     }
-  }, [onOpenAIHistory]);
+    if (onOpenAIFiles) {
+      onOpenAIFiles.current = handleOpenAIFiles;
+    }
+  }, [onOpenAIHistory, onOpenAIFiles]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -441,6 +454,21 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setCurrentView('notebooks-folder');
   };
 
+  const handleAiPromptSend = () => {
+    if (aiPromptText.trim()) {
+      setInitialAiMessage(aiPromptText.trim());
+      setCurrentView('ai-assistant');
+      setAiPromptText(''); // Clear the input after sending
+    }
+  };
+
+  const handleAiPromptKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAiPromptSend();
+    }
+  };
+
   const navigateToHome = () => {
     setCurrentView('streams');
     setSelectedStream(null);
@@ -451,6 +479,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setPracticeType(null);
     setPracticeSubject(null);
     setSelectedNotebookFolder(null);
+    setInitialAiMessage(undefined); // Clear initial AI message
     
     // Clear URL parameters when navigating to home
     try {
@@ -702,25 +731,98 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
                 {isMobile ? (
                   <StreamCarousel streams={streams} onStreamSelect={handleStreamSelect} />
                 ) : (
-                  <div className="flex gap-3 sm:gap-6 pb-3 -mx-2 sm:-mx-6 lg:-mx-8 px-2 sm:px-6 lg:px-8">
-                    {streams.map((stream, index) => (
-                      <motion.div
-                        key={stream.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1, duration: 0.4 }}
-                        className="flex-shrink-0 w-48 sm:w-72"
-                      >
-                        <StreamCard 
-                          key={stream.id} 
-                          stream={stream} 
-                          onClick={() => handleStreamSelect(stream)} 
-                          subjectsClassName="hidden sm:flex"
-                        />
-                      </motion.div>
-                    ))}
+                  <div className="overflow-x-auto pb-3">
+                    <div className="flex gap-3 sm:gap-6 min-w-max px-2">
+                      {streams.map((stream, index) => (
+                        <motion.div
+                          key={stream.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1, duration: 0.4 }}
+                          className="flex-shrink-0 w-48 sm:w-72"
+                        >
+                          <StreamCard 
+                            key={stream.id} 
+                            stream={stream} 
+                            onClick={() => handleStreamSelect(stream)} 
+                            subjectsClassName="hidden sm:flex"
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 )}
+              </section>
+              
+              {/* AI Assistant Input Bar */}
+              <section className="mb-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                  className="flex flex-col items-center"
+                >
+                  {/* Header */}
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-3 sm:mb-4 text-center">
+                    Ask Aspire AI
+                  </h2>
+                  <div className="group relative w-full max-w-2xl lg:max-w-3xl xl:max-w-4xl">
+                    <div className="flex items-center gap-3 rounded-full border-2 border-border bg-background px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 hover:border-primary/50 hover:shadow-md focus-within:border-primary focus-within:shadow-lg">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="relative">
+                          <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-primary flex items-center justify-center">
+                            <svg 
+                              className="h-3 w-3 sm:h-4 sm:w-4 text-primary-foreground" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={2} 
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+                              />
+                            </svg>
+                          </div>
+                          <div className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-blue-500 border-2 border-background animate-pulse"></div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={aiPromptText}
+                          onChange={(e) => setAiPromptText(e.target.value)}
+                          onKeyPress={handleAiPromptKeyPress}
+                          placeholder="Type your question here..."
+                          className="w-full bg-transparent border-none outline-none text-sm sm:text-base placeholder:text-muted-foreground/60 focus:placeholder:text-muted-foreground/40 focus:ring-0 focus:ring-offset-0"
+                        />
+                      </div>
+                      
+                      <Button
+                        onClick={handleAiPromptSend}
+                        disabled={!aiPromptText.trim()}
+                        size="sm"
+                        className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0 transition-all duration-200 hover:scale-105"
+                      >
+                        <svg 
+                          className="h-4 w-4" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M12 5l7 7-7 7M5 12h14" 
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
               </section>
               
               {/* Quick Stats */}
@@ -1066,18 +1168,20 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
             >
               <section>
                 <h3 className="mb-4 text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2"><Book className="h-5 w-5 sm:h-6 sm:w-6"/> Subjects</h3>
-                <div className="flex gap-4 sm:gap-6 pb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-                  {selectedStream.subjects.map((subject, index) => (
-                    <motion.div
-                      key={subject.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.4 }}
-                      className="flex-shrink-0 w-64 sm:w-72"
-                    >
-                      <SubjectCard subject={subject} onClick={() => handleSubjectSelect(subject)} />
-                    </motion.div>
-                  ))}
+                <div className="overflow-x-auto pb-4">
+                  <div className="flex gap-4 sm:gap-6 min-w-max px-2">
+                    {selectedStream.subjects.map((subject, index) => (
+                      <motion.div
+                        key={subject.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.4 }}
+                        className="flex-shrink-0 w-64 sm:w-72"
+                      >
+                        <SubjectCard subject={subject} onClick={() => handleSubjectSelect(subject)} />
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
              </section>
 
@@ -1090,23 +1194,25 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
                     </h3>
                     <p className="text-muted-foreground mt-1 text-sm sm:text-base">Specialized sections for targeted practice and previous year questions.</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {selectedStream.practiceSections.map((section) => (
-                      <motion.div key={section.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
-                        <Card 
-                          className="flex items-center justify-between p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
-                          onClick={() => handlePracticeSectionSelect(section)}
-                        >
-                          <div>
-                            <CardTitle className="text-base font-bold group-hover:text-primary">{section.name}</CardTitle>
-                            <CardDescription className="mt-1 text-xs sm:text-sm">{section.description}</CardDescription>
-                          </div>
-                           <div className="text-sm text-primary font-semibold flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                View Section <ChevronRight className="h-4 w-4 ml-1" />
-                           </div>
-                        </Card>
-                      </motion.div>
-                    ))}
+                  <div className="overflow-x-auto pb-4">
+                    <div className="flex gap-3 sm:gap-4 min-w-max px-2">
+                      {selectedStream.practiceSections.map((section) => (
+                        <motion.div key={section.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }} className="flex-shrink-0 w-80 sm:w-96">
+                          <Card 
+                            className="flex items-center justify-between p-4 sm:p-5 cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group h-full"
+                            onClick={() => handlePracticeSectionSelect(section)}
+                          >
+                            <div>
+                              <CardTitle className="text-base font-bold group-hover:text-primary">{section.name}</CardTitle>
+                              <CardDescription className="mt-1 text-xs sm:text-sm">{section.description}</CardDescription>
+                            </div>
+                             <div className="text-sm text-primary font-semibold flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  View Section <ChevronRight className="h-4 w-4 ml-1" />
+                             </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </section>
               )}
@@ -1202,7 +1308,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
               transition={{ duration: 0.3 }}
               className="flex-1"
             >
-              <AiAssistantScreen ref={aiAssistantRef} />
+              <AiAssistantScreen ref={aiAssistantRef} initialMessage={initialAiMessage} />
             </motion.div>
           )}
         </AnimatePresence>

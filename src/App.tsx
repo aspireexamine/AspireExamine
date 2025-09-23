@@ -47,6 +47,7 @@ const AppContent = () => {
   const [hasBootstrapped, setHasBootstrapped] = useState(false);
   const navigate = useNavigate();
   const aiHistoryRef = useRef<(() => void) | null>(null);
+  const aiFilesRef = useRef<(() => void) | null>(null);
 
   const [streams, setStreams] = useState<Stream[]>(() => {
     try {
@@ -411,6 +412,7 @@ const AppContent = () => {
                   setStudentView={setStudentView}
                   currentView={studentView}
                   onOpenAIHistory={aiHistoryRef}
+                  onOpenAIFiles={aiFilesRef}
                 >
                   <StudentDashboard
                     user={currentUser!}
@@ -421,6 +423,7 @@ const AppContent = () => {
                     onAddResult={handleAddResult}
                     notebookFolders={notebookFolders}
                     onOpenAIHistory={aiHistoryRef}
+                    onOpenAIFiles={aiFilesRef}
                   />
                 </DashboardLayout>
               </ProtectedRoute>
@@ -502,7 +505,7 @@ const AdminDashboardWrapper = ({
   );
 };
 
-const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory }: { 
+const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children, currentView, currentAdminSection, onAdminSectionChange, onOpenAIHistory, onOpenAIFiles }: { 
   user: User | null, 
   onLogout: () => void, 
   studentView: ViewState, 
@@ -511,7 +514,8 @@ const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children
   currentView?: ViewState,
   currentAdminSection?: string,
   onAdminSectionChange?: (section: string) => void,
-  onOpenAIHistory?: React.MutableRefObject<(() => void) | null>
+  onOpenAIHistory?: React.MutableRefObject<(() => void) | null>,
+  onOpenAIFiles?: React.MutableRefObject<(() => void) | null>
 }) => {
   const [viewMode, setViewMode] = useState<'student' | 'admin'>(user?.role || 'student');
 
@@ -535,6 +539,7 @@ const DashboardLayout = ({ user, onLogout, studentView, setStudentView, children
           currentAdminSection={currentAdminSection}
           onAdminSectionChange={onAdminSectionChange}
           onOpenAIHistory={onOpenAIHistory?.current || undefined}
+          onOpenAIFiles={onOpenAIFiles?.current || undefined}
         />
       )}
       {children}

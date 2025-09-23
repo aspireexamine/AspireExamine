@@ -1,6 +1,10 @@
 export { AiAssistantScreen } from './AiAssistantScreen';
 export { ChatMessage } from './ChatMessage';
 export { ChatInput } from './ChatInput';
+export { ChatTranscript } from './ChatTranscript';
+export { CodeBlock } from './CodeBlock';
+export { FilesPanel } from './FilesPanel';
+export { MessageAttachments } from './MessageAttachments';
 export { SuggestedActions } from './SuggestedActions';
 export { LoadingMessage } from './LoadingMessage';
 export { ChatHistory } from './ChatHistory';
