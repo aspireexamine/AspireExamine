@@ -14,8 +14,12 @@ import { ProfilePage } from './ProfilePage';
 import { StudentSidebar } from './StudentSidebar';
 import { StreamCarousel } from './StreamCarousel';
 import { AiAssistantScreen, AiAssistantScreenRef } from '../AiAssistant';
+import { SmartStudyHub } from './SmartStudyHub';
+import { LibraryView } from './LibraryView';
+import { LibraryContentViewer } from './LibraryContentViewer';
+import { LibraryDemo } from './LibraryDemo';
 
-import { Stream, Subject, Paper, Result, User, PracticeSection, PracticeSubject, Chapter, Difficulty } from '@/types';
+import { Stream, Subject, Paper, Result, User, PracticeSection, PracticeSubject, Chapter, Difficulty, LibraryItem } from '@/types';
 import { generateTestResultPDF, PDFReportData } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
@@ -57,8 +61,11 @@ export type ViewState =
   | 'practiceChapter'
   | 'notebooks' 
   | 'notebooks-folder'
+  | 'library'
+  | 'library-content'
   | 'tests'
-  | 'ai-assistant';
+  | 'ai-assistant'
+  | 'smart-study-hub';
 
 interface StudentDashboardProps {
   user: User;
@@ -83,6 +90,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [aiPromptText, setAiPromptText] = useState('');
   const [initialAiMessage, setInitialAiMessage] = useState<string | undefined>(undefined);
+  const [selectedLibraryItem, setSelectedLibraryItem] = useState<LibraryItem | null>(null);
 
   // Handle opening AI history from header
   const handleOpenAIHistory = () => {
@@ -469,6 +477,26 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     }
   };
 
+  const handleViewLibraryContent = (item: LibraryItem) => {
+    setSelectedLibraryItem(item);
+    setCurrentView('library-content');
+  };
+
+  const handleLibraryContentBack = () => {
+    setSelectedLibraryItem(null);
+    setCurrentView('library');
+  };
+
+  const handleToggleLibraryItemFavorite = (itemId: string) => {
+    // This will be handled by the LibraryView component
+    // We just need to trigger a re-render
+  };
+
+  const handleSmartStudyHubContentGenerated = () => {
+    // Content has been generated and saved to library
+    // The LibraryView will automatically refresh when navigated to
+  };
+
   const navigateToHome = () => {
     setCurrentView('streams');
     setSelectedStream(null);
@@ -479,6 +507,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     setPracticeType(null);
     setPracticeSubject(null);
     setSelectedNotebookFolder(null);
+    setSelectedLibraryItem(null);
     setInitialAiMessage(undefined); // Clear initial AI message
     
     // Clear URL parameters when navigating to home
@@ -496,8 +525,10 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
 
   const handleBackNavigation = () => {
     // Handle back navigation based on current view and state
-    if (currentView === 'subjects' || currentView === 'practiceSection' || currentView === 'notebooks' || currentView === 'tests') {
+    if (currentView === 'subjects' || currentView === 'practiceSection' || currentView === 'notebooks' || currentView === 'tests' || currentView === 'library') {
       navigateToHome();
+    } else if (currentView === 'library-content') {
+      handleLibraryContentBack();
     } else if (currentView === 'papers') {
       if (selectedChapter) {
         setCurrentView('chapters');
@@ -594,7 +625,7 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
         } catch {}
       }
       setSelectedPaper(null);
-    } else if (currentView === 'results' || currentView === 'profile' || currentView === 'exam-review' || currentView === 'ai-assistant') {
+    } else if (currentView === 'results' || currentView === 'profile' || currentView === 'exam-review' || currentView === 'ai-assistant' || currentView === 'smart-study-hub') {
       navigateToHome();
     } else if (currentView === 'notebooks-folder') {
       setCurrentView('notebooks');
@@ -627,8 +658,11 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
     streams: "Home",
     notebooks: "Library",
     'notebooks-folder': selectedNotebookFolder?.name || 'Library',
+    library: "My Library",
+    'library-content': selectedLibraryItem?.title || 'Library Content',
     tests: "Test Series",
     'ai-assistant': "AI Assistant",
+    'smart-study-hub': "Smart Study Hub",
   };
 
   if (currentView === 'exam' && selectedPaper) {
@@ -825,6 +859,14 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
                 </motion.div>
               </section>
               
+              {/* Library Demo Section */}
+              <section className="mb-6">
+                <LibraryDemo 
+                  onNavigateToLibrary={() => setCurrentView('library')}
+                  onNavigateToSmartStudyHub={() => setCurrentView('smart-study-hub')}
+                />
+              </section>
+
               {/* Quick Stats */}
               <section className={`mb-6 ${isMobile ? 'mt-8' : ''}`}>
                 <h2 className="mb-2 text-base font-bold text-foreground flex items-center gap-2" suppressHydrationWarning>
@@ -1309,6 +1351,55 @@ export function StudentDashboard({ user, streams, currentView, setCurrentView, o
               className="flex-1"
             >
               <AiAssistantScreen ref={aiAssistantRef} initialMessage={initialAiMessage} />
+            </motion.div>
+          )}
+
+          {currentView === 'smart-study-hub' && (
+            <motion.div
+              key="smart-study-hub"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              <SmartStudyHub 
+                user={user} 
+                onContentGenerated={handleSmartStudyHubContentGenerated}
+              />
+            </motion.div>
+          )}
+
+          {currentView === 'library' && (
+            <motion.div
+              key="library"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              <LibraryView 
+                user={user} 
+                onViewContent={handleViewLibraryContent}
+              />
+            </motion.div>
+          )}
+
+          {currentView === 'library-content' && selectedLibraryItem && (
+            <motion.div
+              key="library-content"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              <LibraryContentViewer 
+                item={selectedLibraryItem}
+                onBack={handleLibraryContentBack}
+                onToggleFavorite={handleToggleLibraryItemFavorite}
+              />
             </motion.div>
           )}
         </AnimatePresence>

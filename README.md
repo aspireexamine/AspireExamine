@@ -2,7 +2,54 @@
 
 ## Overview
 
-AspireExamine is a professional, full-stack web application designed for NEET/JEE and similar exam preparation. It provides a robust platform for students and administrators to manage, attempt, and analyze practice tests, previous year questions, and study materials. The system is built with a modern React + TypeScript frontend, a Node.js/Express backend for auxiliary services, and leverages Supabase for authentication and data management. The UI is highly interactive, responsive, and leverages a component-driven architecture with Tailwind CSS and Radix UI primitives for accessibility and design consistency.
+AspireExamine is a comprehensive, AI-powered educational platform designed for competitive exam preparation (NEET, JEE, and similar exams). It provides a complete ecosystem for students and administrators to manage, attempt, and analyze practice tests, previous year questions, and study materials. The platform features advanced AI capabilities, real-time collaboration, and a modern, responsive interface built with cutting-edge technologies.
+
+## Key Features
+
+### 🤖 AI-Powered Learning
+- **Aspire AI Assistant**: Advanced AI chat interface with multiple model support (Gemini, Groq, OpenRouter)
+- **Smart Study Hub**: AI-generated content from various sources (YouTube, PDFs, text, images)
+- **Content Generation**: Automatic creation of notes, summaries, flashcards, mind maps, and practice questions
+- **Multi-modal Support**: Text, image, and document processing capabilities
+
+### 📚 Comprehensive Study Management
+- **Stream-based Organization**: NEET, JEE, and other competitive exam streams
+- **Subject-wise Structure**: Physics, Chemistry, Biology, Mathematics with chapter-wise organization
+- **Practice Sections**: Full syllabus, subject-wise, and chapter-wise practice tests
+- **Test Series Management**: Mock tests and comprehensive test series
+- **Previous Year Questions**: Organized by year and difficulty levels
+
+### 🎯 Advanced Exam Interface
+- **Real-time Timer**: Configurable exam timers with warnings
+- **Question Palette**: Visual navigation through questions with status indicators
+- **Auto-save**: Automatic saving of answers and progress
+- **Review System**: Mark questions for review and detailed analysis
+- **PDF Reports**: Downloadable detailed performance reports
+
+### 📊 Analytics & Insights
+- **Performance Tracking**: Detailed analytics on test performance
+- **Progress Monitoring**: Visual progress indicators and statistics
+- **Subject-wise Analysis**: Performance breakdown by subject and topic
+- **Historical Data**: Track improvement over time
+
+### 🏛️ Admin Dashboard
+- **Content Management**: Full CRUD operations for streams, subjects, papers, and questions
+- **Bulk Import**: CSV/JSON import for questions and content
+- **AI Tools**: YouTube transcript extraction, PDF processing, and question generation
+- **User Management**: Student and admin role management
+- **Analytics Dashboard**: Platform-wide performance metrics
+
+### 📖 Digital Library
+- **Personal Library**: Students can save and organize generated content
+- **Notebook Management**: Upload and organize study materials
+- **Content Types**: Notes, summaries, flashcards, mind maps, and questions
+- **Search & Filter**: Advanced search and categorization features
+
+### 🔐 Authentication & Security
+- **Supabase Auth**: Secure authentication with multiple providers
+- **Role-based Access**: Student and admin role separation
+- **Profile Management**: Complete user profile with avatar support
+- **Session Management**: Secure session handling and persistence
 
 ---
 
@@ -26,39 +73,58 @@ The complete file structure is maintained in [`tree.md`](tree.md). This structur
 
 ---
 
-## Frameworks, Libraries, and Tools
+## Technology Stack
 
-### Core Frameworks
-- **React 18**: UI library for building interactive user interfaces.
-- **TypeScript**: Static typing for JavaScript, improving code quality and maintainability.
-- **Vite**: Fast development server and build tool.
-- **Node.js/Express**: Backend server for auxiliary API endpoints (e.g., YouTube audio proxy).
-- **Supabase**: Backend-as-a-Service for authentication and database.
+### Frontend Technologies
+- **React 18**: Modern UI library with hooks and concurrent features
+- **TypeScript**: Static typing for enhanced development experience
+- **Vite**: Lightning-fast build tool and development server
+- **React Router DOM**: Client-side routing with nested routes
+- **Framer Motion**: Advanced animations and transitions
 
-### UI & Styling
-- **Tailwind CSS**: Utility-first CSS framework for rapid UI development.
-- **Radix UI**: Accessible, unstyled UI primitives (used via @radix-ui/* packages).
-- **Framer Motion**: Animation library for React.
-- **Lucide React**: Icon library.
-- **ShaderGradient**: For animated backgrounds.
+### UI & Design System
+- **Tailwind CSS**: Utility-first CSS framework with custom design tokens
+- **Radix UI**: Accessible, unstyled UI primitives (40+ components)
+- **Lucide React**: Comprehensive icon library
+- **Shadcn/ui**: Pre-built component library
+- **CSS Variables**: Dynamic theming with light/dark mode support
 
-### State & Forms
-- **React Hook Form**: Form state management.
-- **Zod**: Schema validation.
-- **React Router DOM**: Routing and navigation.
-- **React Context**: Theming and global state.
+### Backend & Database
+- **Supabase**: Backend-as-a-Service with PostgreSQL database
+- **Supabase Auth**: Authentication with multiple providers
+- **Supabase Storage**: File storage for documents and media
+- **Supabase Edge Functions**: Serverless functions for AI processing
+- **Node.js/Express**: Auxiliary server for YouTube audio proxy
 
-### Data & Parsing
-- **PapaParse**: CSV parsing.
-- **pdf-parse, pdfjs-dist, react-pdf**: PDF parsing and rendering.
-- **ytdl-core, youtube-captions-scraper**: YouTube audio/captions extraction.
-- **AssemblyAI**: AI-powered transcription (used in admin tools).
+### AI & Machine Learning
+- **Google Gemini**: Advanced AI model for content generation
+- **Groq**: High-performance AI inference
+- **OpenRouter**: Access to multiple AI models
+- **AssemblyAI**: Speech-to-text transcription
+- **Custom AI Services**: Multi-provider AI chat service
 
-### Dev & Build Tools
-- **ESLint**: Linting and code quality.
-- **TypeScript ESLint**: TypeScript linting.
-- **Concurrently**: Run Vite and Express together in dev.
-- **PostCSS, TailwindCSS Animate**: CSS tooling.
+### Data Processing & File Handling
+- **PapaParse**: CSV parsing and generation
+- **PDF.js**: Client-side PDF processing
+- **React PDF**: PDF rendering and display
+- **ytdl-core**: YouTube video processing
+- **youtube-captions-scraper**: Caption extraction
+- **html2canvas**: Screenshot generation
+- **jsPDF**: PDF generation for reports
+
+### State Management & Forms
+- **React Hook Form**: Performant form handling
+- **Zod**: Runtime type validation
+- **React Context**: Global state management
+- **Local Storage**: Client-side persistence
+- **Session Storage**: Temporary data storage
+
+### Development Tools
+- **ESLint**: Code linting with TypeScript support
+- **TypeScript ESLint**: Advanced TypeScript linting rules
+- **Concurrently**: Parallel development server execution
+- **PostCSS**: CSS processing and optimization
+- **Autoprefixer**: CSS vendor prefixing
 
 ---
 
@@ -73,94 +139,250 @@ The complete file structure is maintained in [`tree.md`](tree.md). This structur
 
 ---
 
-## How the Project Works
+## How the Platform Works
 
-1. **Landing & Auth**: Users land on a visually rich landing page (`LandingPage.tsx`). Authentication is handled via Supabase (email/password, phone/OTP, Google, etc.).
-2. **Role-based Dashboards**: After login, users are routed to either the Student or Admin dashboard based on their role.
-3. **Student Dashboard**: Students can:
-   - Browse streams (e.g., NEET), subjects, and papers.
-   - Attempt practice tests, view results, and manage their profile.
-   - Access notebooks and study materials.
-   - Use a palette for question navigation and a timer for exams.
-4. **Admin Dashboard**: Admins can:
-   - Manage streams, subjects, chapters, and papers.
-   - Bulk import questions (CSV/JSON), manage users, and view analytics.
-   - Use AI tools for transcript/caption extraction and question generation.
-   - Configure platform and exam settings.
-5. **AI Tools**: Admins can extract YouTube audio, transcribe it (AssemblyAI), and generate questions from transcripts.
-6. **Data Model**: All entities (User, Stream, Subject, Paper, Question, Result, etc.) are defined in `src/types/index.ts` and used throughout the app.
+### User Journey
 
----
+1. **Landing & Authentication**
+   - Users access a modern landing page with feature highlights
+   - Secure authentication via Supabase (email/password, Google OAuth)
+   - Role-based routing to appropriate dashboards
 
-## Detailed File/Folder Explanations
+2. **Student Experience**
+   - **Home Dashboard**: Browse available streams (NEET, JEE, etc.)
+   - **Subject Navigation**: Drill down through subjects → chapters → papers
+   - **Practice Tests**: Attempt full syllabus, subject-wise, or chapter-wise tests
+   - **AI Assistant**: Get help with study questions and content generation
+   - **Smart Study Hub**: Generate study materials from various sources
+   - **Personal Library**: Save and organize generated content
+   - **Performance Analytics**: Track progress and identify weak areas
 
-### Top-Level Files
-- **index.html**: Main HTML entry point.
-- **package.json**: Project dependencies and scripts.
-- **vite.config.ts**: Vite configuration, including path aliases.
-- **server.js**: Express server for YouTube audio proxy.
-- **tailwind.config.js, postcss.config.js**: Tailwind and PostCSS configuration.
-- **tsconfig.json, tsconfig.app.json, tsconfig.node.json**: TypeScript configuration.
-- **components.json**: (If present) likely used for component documentation or tooling.
+3. **Admin Experience**
+   - **Content Management**: Create and manage streams, subjects, papers, questions
+   - **Bulk Operations**: Import questions via CSV/JSON files
+   - **AI Tools**: Generate content from YouTube videos, PDFs, and text
+   - **User Management**: Monitor student progress and manage accounts
+   - **Analytics Dashboard**: Platform-wide performance metrics
+   - **Test Series Management**: Create and organize mock test series
 
-### `src/` Directory
-- **App.tsx**: Main application logic, routing, and session management.
-- **main.tsx**: Entry point, renders the app and sets up React Router.
-- **contexts/ThemeContext.tsx**: Provides theming (light/dark/system) via React Context.
-- **hooks/**: Custom React hooks (e.g., `useLocalStorage`, `useExamTimer`, `use-toast`).
-- **lib/**: Utility libraries (e.g., `supabaseClient.ts` for Supabase integration, `utils.ts` for class merging, etc.).
-- **types/**: TypeScript interfaces and types for all major entities (User, Stream, Paper, etc.).
-- **utils/constants.ts**: Sample data and configuration constants.
+### AI-Powered Features
 
-#### `src/components/`
-- **admin/**: All admin dashboard features (Streams, Papers, Questions, Bulk Import, AI Tools, Analytics, Settings, Users, Notebooks).
-- **student/**: Student dashboard features (Exam interface, Results, Profile, Practice, Notebooks).
-- **landing/**: Landing page and marketing UI.
-- **layout/**: Shared layout components (Header, Sidebar).
-- **shared/**: Reusable UI elements (Loader, EmptyState, ThemeToggle, etc.).
-- **ui/**: Design system components, mostly built on Radix UI primitives (Accordion, Dialog, Button, Table, etc.).
-- **placeholders/**: Placeholder components for dashboard sections.
-- **test/**: Test/practice mode switcher and related logic.
+1. **Content Generation**
+   - Extract transcripts from YouTube educational videos
+   - Process PDF documents and textbooks
+   - Generate practice questions with multiple difficulty levels
+   - Create study notes, summaries, and flashcards
 
----
+2. **Smart Study Assistant**
+   - Multi-model AI chat interface (Gemini, Groq, OpenRouter)
+   - File upload support for documents and images
+   - Context-aware responses based on study materials
+   - Chat history and session management
 
-## Current Implementation Details
+3. **Automated Question Creation**
+   - AI-generated multiple-choice questions
+   - Customizable difficulty levels and question types
+   - Bulk question generation from educational content
+   - Quality validation and approval workflows
 
-- **Authentication**: Supabase handles all user authentication and session management. The app supports email/password, phone/OTP, and Google login.
-- **Admin Tools**: Admins can manage all content (streams, subjects, papers, questions), import/export data, and use AI tools for content generation.
-- **Student Experience**: Students can browse, attempt, and review practice tests, view analytics, and manage their profile.
-- **AI Integration**: Admins can extract audio from YouTube, transcribe it, and generate questions using AssemblyAI and custom logic.
-- **PDF/CSV Support**: Bulk import/export of questions and papers is supported via CSV and PDF parsing.
-- **Analytics**: Rich analytics dashboards for both students and admins, including charts and performance metrics.
-- **Theming**: Full support for light/dark/system themes, persisted in localStorage.
-- **Component-Driven**: All UI is built from reusable, accessible components, with a focus on maintainability and scalability.
+### Data Architecture
+
+- **Streams**: Top-level exam categories (NEET, JEE, etc.)
+- **Subjects**: Academic subjects within each stream
+- **Chapters**: Organized content within subjects
+- **Papers**: Test papers with questions and metadata
+- **Practice Sections**: Specialized practice test categories
+- **Test Series**: Mock test collections
+- **Results**: Student performance data and analytics
+- **Library Items**: Generated and uploaded study materials
 
 ---
 
-## Usage
+## Project Structure
 
-### Development
-```sh
-npm install
-npm run dev
-```
-This runs both the Vite dev server and the Express backend concurrently.
+### Core Application Files
+- **`src/App.tsx`**: Main application component with routing, authentication, and state management
+- **`src/main.tsx`**: Application entry point with React Router setup
+- **`src/LoginPage.tsx`**: Authentication interface with Supabase integration
+- **`server.js`**: Express server for YouTube audio proxy and auxiliary services
 
-### Build
-```sh
-npm run build
-```
+### Component Architecture
 
-### Lint
-```sh
-npm run lint
-```
+#### `src/components/student/`
+- **`StudentDashboard.tsx`**: Main student interface with navigation and content rendering
+- **`ExamInterface.tsx`**: Advanced exam interface with timer, palette, and auto-save
+- **`ResultsPage.tsx`**: Performance analysis and detailed result breakdown
+- **`ProfilePage.tsx`**: User profile management and settings
+- **`SmartStudyHub.tsx`**: AI-powered content generation interface
+- **`LibraryView.tsx`**: Personal library for organizing study materials
+- **`LibraryContentViewer.tsx`**: Content viewer for generated materials
+- **`StudentSidebar.tsx`**: Navigation sidebar with role-based menu items
+
+#### `src/components/admin/`
+- **`AdminDashboard.tsx`**: Main admin interface with section routing
+- **`StreamsManagement.tsx`**: Stream creation and management
+- **`PapersManagement.tsx`**: Paper and question management
+- **`QuestionsManagement.tsx`**: Individual question editing and organization
+- **`BulkImport.tsx`**: CSV/JSON import system for questions
+- **`AITools.tsx`**: AI-powered content generation tools
+- **`TestManager.tsx`**: Test series and mock test management
+- **`Analytics.tsx`**: Platform analytics and performance metrics
+- **`UsersManagement.tsx`**: User account management
+- **`AdminLibraryManager.tsx`**: Admin library and notebook management
+
+#### `src/components/AiAssistant/`
+- **`AiAssistantScreen.tsx`**: Main AI chat interface with multi-model support
+- **`ChatMessage.tsx`**: Individual chat message component with file support
+- **`ChatInput.tsx`**: Advanced input with file upload and voice support
+- **`FilesPanel.tsx`**: File management and preview system
+- **`ChatHistory.tsx`**: Chat session history and management
+- **`SuggestedActions.tsx`**: AI-powered suggested actions and prompts
+
+#### `src/components/ui/`
+- **40+ UI Components**: Complete design system built on Radix UI primitives
+- **Accessible Components**: Accordion, Dialog, Button, Table, Form, etc.
+- **Custom Components**: Specialized components for exam interface and analytics
+
+### Services & Utilities
+
+#### `src/services/`
+- **`aiChatService.ts`**: Multi-provider AI chat service with fallback support
+- **`chatStorageService.ts`**: Chat history and session persistence
+
+#### `src/lib/`
+- **`supabaseClient.ts`**: Supabase client configuration and setup
+- **`supabaseQueries.ts`**: Database queries and data management
+- **`file-utils.ts`**: File handling utilities and validation
+- **`speech.ts`**: Speech-to-text and voice input services
+- **`providers/base.ts`**: AI provider abstraction layer
+
+#### `src/types/`
+- **`index.ts`**: Complete TypeScript definitions for all entities
+- **`supabase.ts`**: Generated Supabase type definitions
+
+### Configuration Files
+- **`vite.config.ts`**: Vite configuration with path aliases and build optimization
+- **`tailwind.config.js`**: Tailwind CSS configuration with custom design tokens
+- **`tsconfig.json`**: TypeScript configuration for strict type checking
+- **`eslint.config.js`**: ESLint configuration with React and TypeScript rules
+- **`package.json`**: Dependencies and build scripts
 
 ---
 
-## Credits
-- Built with [React](https://react.dev/), [Vite](https://vitejs.dev/), [Supabase](https://supabase.com/), [Tailwind CSS](https://tailwindcss.com/), [Radix UI](https://www.radix-ui.com/), and more.
+## Implementation Highlights
+
+### Advanced Features
+
+- **Real-time Synchronization**: Live updates across admin and student interfaces using Supabase real-time subscriptions
+- **Multi-modal AI Support**: Integration with multiple AI providers (Gemini, Groq, OpenRouter) with automatic fallback
+- **Advanced File Processing**: Support for PDFs, images, YouTube videos, and text documents
+- **Intelligent Content Generation**: AI-powered creation of study materials, practice questions, and summaries
+- **Comprehensive Analytics**: Detailed performance tracking with visual charts and progress indicators
+- **Responsive Design**: Mobile-first approach with adaptive layouts for all screen sizes
+
+### Technical Excellence
+
+- **Type Safety**: Complete TypeScript coverage with strict type checking
+- **Performance Optimization**: Code splitting, lazy loading, and efficient state management
+- **Accessibility**: WCAG-compliant components with keyboard navigation and screen reader support
+- **Security**: Secure authentication, role-based access control, and data validation
+- **Scalability**: Modular architecture with reusable components and services
+
+### Development Experience
+
+- **Modern Tooling**: Vite for fast development, ESLint for code quality, and TypeScript for reliability
+- **Component Library**: 40+ pre-built UI components with consistent design patterns
+- **State Management**: Efficient state handling with React Context and custom hooks
+- **Testing Ready**: Structured for easy unit and integration testing
+- **Documentation**: Comprehensive inline documentation and type definitions
 
 ---
 
-## For full details on each file and function, see the inline comments in the codebase and the [tree.md](tree.md) file for the complete structure.
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm
+- Supabase account and project
+- AI provider API keys (optional, for AI features)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd AspireExamine
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   Create a `.env.local` file with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+   This runs both the Vite dev server (port 5173) and Express backend (port 3001) concurrently.
+
+### Available Scripts
+
+- **`npm run dev`**: Start development servers
+- **`npm run build`**: Build for production
+- **`npm run build:netlify`**: Build optimized for Netlify deployment
+- **`npm run lint`**: Run ESLint for code quality
+- **`npm run preview`**: Preview production build locally
+- **`npm run update-schema`**: Update Supabase TypeScript types
+
+### Deployment
+
+The application is configured for deployment on:
+- **Netlify**: Use `npm run build:netlify` for optimized builds
+- **Vercel**: Standard Vite build process
+- **Supabase**: Edge functions for AI processing
+
+### AI Configuration
+
+To enable AI features, configure API keys in your Supabase dashboard:
+- Google Gemini API key
+- Groq API key  
+- OpenRouter API key
+- AssemblyAI API key (for transcription)
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Acknowledgments
+
+- Built with [React](https://react.dev/), [Vite](https://vitejs.dev/), [Supabase](https://supabase.com/)
+- UI components from [Radix UI](https://www.radix-ui.com/) and [Tailwind CSS](https://tailwindcss.com/)
+- AI integration with [Google Gemini](https://ai.google.dev/), [Groq](https://groq.com/), and [OpenRouter](https://openrouter.ai/)
+- Icons by [Lucide](https://lucide.dev/)
+- Animations by [Framer Motion](https://www.framer.com/motion/)
+
+---
+
+## Support
+
+For support and questions, please open an issue in the repository or contact the development team.

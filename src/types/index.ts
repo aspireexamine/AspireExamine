@@ -166,3 +166,106 @@ export interface TestSeries {
   description: string;
   tests: Test[];
 }
+
+// Smart Study Hub Generated Content Types
+export type GeneratedContentType = 'notes' | 'summary' | 'flashcards' | 'mindmap' | 'questions';
+
+export type InputMethod = 'youtube' | 'file' | 'text' | 'image' | 'scan';
+
+export interface GeneratedContent {
+  id: string;
+  userId: string;
+  title: string;
+  type: GeneratedContentType;
+  inputMethod: InputMethod;
+  inputSource: string; // URL, file name, or text preview
+  content: GeneratedContentData;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  isFavorite?: boolean;
+}
+
+export interface GeneratedContentData {
+  notes?: NotesContent;
+  summary?: SummaryContent;
+  flashcards?: FlashcardContent[];
+  mindmap?: MindmapContent;
+  questions?: QuestionContent[];
+}
+
+export interface NotesContent {
+  title: string;
+  sections: NotesSection[];
+  keyPoints: string[];
+  references?: string[];
+}
+
+export interface NotesSection {
+  heading: string;
+  content: string;
+  subSections?: NotesSection[];
+}
+
+export interface SummaryContent {
+  overview: string;
+  keyPoints: string[];
+  mainTopics: string[];
+  conclusion?: string;
+}
+
+export interface FlashcardContent {
+  id: string;
+  front: string;
+  back: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category?: string;
+}
+
+export interface MindmapContent {
+  title: string;
+  centralTopic: string;
+  branches: MindmapBranch[];
+}
+
+export interface MindmapBranch {
+  id: string;
+  label: string;
+  subBranches: MindmapBranch[];
+  color?: string;
+}
+
+export interface QuestionContent {
+  id: string;
+  question: string;
+  options?: string[];
+  correctAnswer?: string | number;
+  explanation?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  type: 'multiple-choice' | 'true-false' | 'short-answer' | 'essay';
+}
+
+// Library System Types
+export interface LibraryItem {
+  id: string;
+  userId: string;
+  type: 'notebook' | 'generated-content';
+  title: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  // Union type for different content
+  content: Notebook | GeneratedContent;
+}
+
+export interface LibraryFolder {
+  id: string;
+  name: string;
+  description?: string;
+  items: LibraryItem[];
+  createdAt: string;
+  updatedAt: string;
+  isSystemFolder?: boolean; // For auto-generated folders like "Generated Content"
+}

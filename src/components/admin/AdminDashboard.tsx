@@ -9,6 +9,7 @@ import { PapersManagement } from './PapersManagement';
 import { QuestionsManagement } from './QuestionsManagement';
 import { BulkImport } from './BulkImport';
 import { NotebookManager } from './NotebookManager';
+import { AdminLibraryManager } from './AdminLibraryManager';
 import { TestManager } from './TestManager';
 import { AITools } from './AITools';
 import { UsersManagement } from './UsersManagement';
@@ -198,7 +199,7 @@ export function AdminDashboard({ streams, user, setStreams, onUpdateUser, notebo
       case 'questions':
         return <QuestionsManagement streams={streams} setStreams={setStreams} allQuestionsFromFile={allQuestions} setAllQuestions={setAllQuestions} />;
       case 'notebooks':
-        return <NotebookManager notebookFolders={notebookFolders} setNotebookFolders={setNotebookFolders} />;
+        return <AdminLibraryManager notebookFolders={notebookFolders} setNotebookFolders={setNotebookFolders} />;
       case 'tests':
         return <TestManager streams={streams} setStreams={setStreams} />;
       case 'import':

@@ -1,28 +1,32 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, Notebook, TestTube2, ChevronLeft, Bot } from 'lucide-react';
+import { Home, Notebook, TestTube2, ChevronLeft, Bot, Sparkles } from 'lucide-react';
 
 interface StudentSidebarProps {
   currentView: string;
-  onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant') => void;
+  onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant' | 'smart-study-hub' | 'library') => void;
   className?: string;
 }
 
 export const studentMenuItems = [
   { id: 'streams', label: 'Home', icon: Home },
   { id: 'ai-assistant', label: 'Aspire Ai', icon: Bot },
-  { id: 'notebooks', label: 'Library', icon: Notebook },
+  { id: 'smart-study-hub', label: 'Smart Study Hub', icon: Sparkles },
+  { id: 'library', label: 'My Library', icon: Notebook },
+  { id: 'notebooks', label: 'Admin Library', icon: Notebook },
   { id: 'tests', label: 'Tests', icon: TestTube2 },
 ];
 
-export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkClick }: { currentView: string; onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant') => void; collapsed?: boolean; onLinkClick?: () => void; }) {
+export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkClick }: { currentView: string; onNavigate: (view: 'streams' | 'notebooks' | 'tests' | 'ai-assistant' | 'smart-study-hub' | 'library') => void; collapsed?: boolean; onLinkClick?: () => void; }) {
   return (
     <nav className="flex flex-col gap-2 mt-8 md:-mt-10 px-4">
       {studentMenuItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.id === 'streams'
           ? ['streams', 'subjects', 'papers', 'exam', 'results', 'practiceSection', 'practiceSubject', 'practiceChapter'].includes(currentView)
+          : item.id === 'library'
+          ? ['library', 'library-content'].includes(currentView)
           : currentView === item.id;
 
         return (
@@ -30,7 +34,7 @@ export function StudentSidebarNav({ currentView, onNavigate, collapsed, onLinkCl
             key={item.id}
             variant={isActive ? 'secondary' : 'ghost'}
             onClick={() => {
-              onNavigate(item.id as 'streams' | 'notebooks' | 'tests' | 'ai-assistant');
+              onNavigate(item.id as 'streams' | 'notebooks' | 'tests' | 'ai-assistant' | 'smart-study-hub' | 'library');
               onLinkClick?.();
             }}
             className="w-full justify-start h-11 text-base px-4"
