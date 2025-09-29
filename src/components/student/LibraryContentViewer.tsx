@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -20,7 +22,13 @@ import {
   Calendar,
   Tag,
   Eye,
-  EyeOff
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  BookmarkPlus,
+  BookmarkMinus,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { 
   LibraryItem, 
@@ -327,64 +335,185 @@ export function LibraryContentViewer({ item, onBack, onToggleFavorite }: Library
 
   const renderQuestionsContent = (questions: QuestionContent[]) => {
     const currentQuestion = questions[selectedQuestionIndex];
+    const [answers, setAnswers] = useState<Record<string, number | null>>({});
+    const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
+    const [showExplanation, setShowExplanation] = useState(false);
+    
+    const handleAnswerSelect = (optionIndex: number) => {
+      const questionId = currentQuestion.id;
+      setAnswers(prev => {
+        if (prev[questionId] === optionIndex) {
+          return { ...prev, [questionId]: null };
+        }
+        return { ...prev, [questionId]: optionIndex };
+      });
+    };
+
+    const handleMarkForReview = () => {
+      const questionId = currentQuestion.id;
+      setMarkedForReview(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(questionId)) {
+          newSet.delete(questionId);
+        } else {
+          newSet.add(questionId);
+        }
+        return newSet;
+      });
+    };
+
+    const isMarked = markedForReview.has(currentQuestion.id);
+    const selectedAnswer = answers[currentQuestion.id] as number | undefined;
+    const isCorrect = selectedAnswer !== undefined && currentQuestion.correctAnswer === selectedAnswer;
+    const isIncorrect = selectedAnswer !== undefined && currentQuestion.correctAnswer !== selectedAnswer;
     
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Practice Questions</span>
-              <span className="text-sm font-normal text-muted-foreground">
-                {selectedQuestionIndex + 1} of {questions.length}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{currentQuestion.difficulty}</Badge>
-                <Badge variant="secondary">{currentQuestion.type}</Badge>
+      <div className="min-h-screen bg-background">
+        {/* Header Bar */}
+        <header className="sticky top-0 z-20 border-b px-2 sm:px-4 py-2 flex items-center justify-between bg-background">
+          <div className="flex items-center gap-2 text-sm sm:text-base">
+            <h1 className="hidden sm:block text-lg font-bold truncate">Practice Questions</h1>
+          </div>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Button
+              variant={showExplanation ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowExplanation(!showExplanation)}
+            >
+              {showExplanation ? 'Hide' : 'Show'} Explanation
+            </Button>
+          </div>
+        </header>
+
+        <div className="container mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6 pt-4">
+          {/* Question Area */}
+          <div className="space-y-4 sm:space-y-6">
+            <motion.div
+              key={selectedQuestionIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2 px-1 sm:px-0">
+                <div className="flex items-center gap-1 text-[11px] sm:text-xs font-medium rounded-full bg-muted px-2 py-0.5 sm:px-2.5 sm:py-1">
+                  <span>Difficulty:</span>
+                  <span className="font-bold capitalize">{currentQuestion.difficulty}</span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] sm:text-xs font-medium rounded-full bg-muted px-2 py-0.5 sm:px-2.5 sm:py-1 capitalize">
+                  <span>Type:</span>
+                  <span className="font-semibold">{currentQuestion.type}</span>
+                </div>
               </div>
-              
-              <h3 className="text-lg font-semibold">{currentQuestion.question}</h3>
-              
-              {currentQuestion.options && (
-                <div className="space-y-2">
-                  {currentQuestion.options.map((option, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                      {option}
+
+              <Card>
+                <CardHeader className="border-b p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-1 sm:gap-2">
+                    <div className="flex items-center gap-2 text-base sm:text-lg font-bold">
+                      <div className="text-xs sm:text-sm font-semibold bg-muted text-muted-foreground rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5">
+                        {selectedQuestionIndex + 1}/{questions.length} 
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              
-              {currentQuestion.explanation && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <h4 className="font-semibold mb-2">Explanation</h4>
-                  <p className="text-foreground">{currentQuestion.explanation}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-between">
+                    <div className="flex items-center">
+                      <Button
+                        variant={isMarked ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={handleMarkForReview}
+                        className="gap-1 h-8 px-2 sm:px-3 text-xs sm:text-sm"
+                      >
+                        {isMarked ? <BookmarkMinus className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
+                        {isMarked ? 'Unmark' : 'Mark'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+                  <div className="prose prose-sm max-w-none dark:prose-invert leading-snug sm:leading-relaxed">
+                    <p className="text-sm sm:text-base">{currentQuestion.question}</p>
+                  </div>
+                  
+                  {currentQuestion.options && (
+                    <RadioGroup
+                      value={selectedAnswer?.toString() || ''}
+                      onValueChange={(value) => handleAnswerSelect(parseInt(value, 10))}
+                      className="space-y-2"
+                    >
+                      {currentQuestion.options.map((option, index) => {
+                        const isSelected = selectedAnswer === index;
+                        const isCorrectAnswer = currentQuestion.correctAnswer === index;
+
+                        return (
+                          <Label 
+                            key={index}
+                            className={`relative flex items-center space-x-3 p-2.5 sm:p-3 rounded-lg border transition-colors cursor-pointer ${
+                              showExplanation && isCorrectAnswer ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
+                              showExplanation && isSelected && !isCorrectAnswer ? 'border-red-500 bg-red-50 dark:bg-red-900/20' :
+                              isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            <RadioGroupItem 
+                              value={index.toString()} 
+                              id={`option-${index}`}
+                            />
+                            <span className="flex-1 text-xs sm:text-sm leading-relaxed">
+                              {option} 
+                            </span>
+                            {showExplanation && isCorrectAnswer && <CheckCircle className="h-5 w-5 text-green-500 ml-auto" />}
+                            {showExplanation && isSelected && !isCorrectAnswer && <XCircle className="h-5 w-5 text-red-500 ml-auto" />}
+                          </Label>
+                        );
+                      })}
+                    </RadioGroup>
+                  )}
+                  
+                  {showExplanation && currentQuestion.explanation && (
+                    <motion.div 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      className="mt-4 p-3 bg-muted rounded-lg space-y-1 text-sm"
+                    >
+                      <h3 className="font-semibold">Explanation:</h3>
+                      <p className="text-muted-foreground">{currentQuestion.explanation}</p>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between mt-4 gap-2">
               <Button
                 variant="outline"
                 onClick={() => setSelectedQuestionIndex(Math.max(0, selectedQuestionIndex - 1))}
                 disabled={selectedQuestionIndex === 0}
+                className="gap-1 sm:gap-2 px-3 sm:px-4 h-9"
               >
-                Previous
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
+              
               <Button
-                variant="outline"
+                variant="secondary"
+                onClick={() => handleAnswerSelect(selectedAnswer as number)}
+                disabled={selectedAnswer === undefined || selectedAnswer === null}
+                className="h-9 px-3 sm:px-4"
+              >
+                Uncheck
+              </Button>
+              
+              <Button
                 onClick={() => setSelectedQuestionIndex(Math.min(questions.length - 1, selectedQuestionIndex + 1))}
                 disabled={selectedQuestionIndex === questions.length - 1}
+                className="gap-1 sm:gap-2 px-3 sm:px-4 h-9"
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   };

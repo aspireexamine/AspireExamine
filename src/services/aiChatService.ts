@@ -551,6 +551,190 @@ Original text: "${prompt}"`;
     
     return baseTitle;
   }
+
+  async generateFolderTitle(content: string, inputMethod: string, inputSource: string): Promise<string> {
+    const titlePrompt = `Based on the following content, generate a concise, descriptive title (maximum 50 characters) for organizing this study material. The title should capture the main topic or subject matter.
+
+Content: "${content.substring(0, 1000)}${content.length > 1000 ? '...' : ''}"
+Input Method: ${inputMethod}
+Source: ${inputSource}
+
+Generate a title that is:
+- Descriptive and specific to the content
+- Concise (max 50 characters)
+- Professional and academic
+- Easy to understand at a glance
+
+Return only the title, no additional text or explanations.`;
+
+    const errors: string[] = [];
+
+    // Try providers in order of preference
+    const providers = [
+      { name: 'Gemini', fn: () => this.tryGeminiTitleGeneration(titlePrompt) },
+      { name: 'Groq', fn: () => this.tryGroqTitleGeneration(titlePrompt) },
+      { name: 'OpenRouter', fn: () => this.tryOpenRouterTitleGeneration(titlePrompt) }
+    ];
+
+    for (const provider of providers) {
+      try {
+        const response = await provider.fn();
+        return response.trim();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`${provider.name}: ${errorMessage}`);
+        console.warn(`Failed to use ${provider.name} for title generation:`, error);
+      }
+    }
+
+    // If all providers fail, fallback to a simple title
+    console.warn('All AI providers failed for title generation, using fallback');
+    return this.generateFallbackTitle(content, inputMethod, inputSource);
+  }
+
+  private async tryGeminiTitleGeneration(prompt: string): Promise<string> {
+    const keys = await this.getAPIKeys();
+    const key = keys.google;
+    if (!key) throw new Error('Gemini API key not configured');
+
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
+      method: 'POST',
+      headers: {
+        'x-goog-api-key': key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.5,
+          topK: 20,
+          topP: 0.8,
+          maxOutputTokens: 100,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    
+    if (!text) {
+      throw new Error('No response from Gemini API');
+    }
+
+    return text;
+  }
+
+  private async tryGroqTitleGeneration(prompt: string): Promise<string> {
+    const keys = await this.getAPIKeys();
+    const key = keys.groq;
+    if (!key) throw new Error('Groq API key not configured');
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        temperature: 0.5,
+        max_tokens: 100,
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    const text = result?.choices?.[0]?.message?.content ?? '';
+    
+    if (!text) {
+      throw new Error('No response from Groq API');
+    }
+
+    return text;
+  }
+
+  private async tryOpenRouterTitleGeneration(prompt: string): Promise<string> {
+    const keys = await this.getAPIKeys();
+    const key = keys.openrouter;
+    if (!key) throw new Error('OpenRouter API key not configured');
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'AspireExamine AI Assistant'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        temperature: 0.5,
+        max_tokens: 100,
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    const text = result?.choices?.[0]?.message?.content ?? '';
+    
+    if (!text) {
+      throw new Error('No response from OpenRouter API');
+    }
+
+    return text;
+  }
+
+  private generateFallbackTitle(content: string, inputMethod: string, inputSource: string): string {
+    // Extract first few meaningful words from content
+    const words = content.split(/\s+/).filter(word => 
+      word.length > 3 && 
+      !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'man', 'men', 'put', 'say', 'she', 'too', 'use'].includes(word.toLowerCase())
+    ).slice(0, 4);
+    
+    if (words.length > 0) {
+      return words.join(' ').substring(0, 50);
+    }
+    
+    // Fallback to input method and source
+    switch (inputMethod) {
+      case 'youtube':
+        return `YouTube: ${inputSource.substring(0, 30)}`;
+      case 'file':
+        return `Document: ${inputSource}`;
+      case 'text':
+        return `Text Content`;
+      case 'image':
+        return `Image: ${inputSource}`;
+      case 'scan':
+        return `Scanned Document`;
+      default:
+        return 'Study Material';
+    }
+  }
 }
 
 export const aiChatService = new AIChatService();

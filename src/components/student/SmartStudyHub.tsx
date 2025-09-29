@@ -15,12 +15,13 @@ import {
   CreditCard, 
   Network, 
   HelpCircle,
-  Sparkles,
   ArrowRight,
   Check,
   Image,
   Scan,
-  X
+  X,
+  Loader2,
+  Brain
 } from 'lucide-react';
 import { 
   createGeneratedContentFromSmartStudyHub,
@@ -30,10 +31,14 @@ import {
 } from '@/lib/libraryStorage';
 import { 
   GeneratedContentType, 
-  InputMethod, 
   GeneratedContentData,
-  User
+  User,
+  InputMethod
 } from '@/types';
+import { aiChatService } from '@/services/aiChatService';
+import { toast } from 'sonner';
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 interface SmartStudyHubProps {
   className?: string;
@@ -41,7 +46,6 @@ interface SmartStudyHubProps {
   onContentGenerated?: () => void;
 }
 
-type InputMethod = 'youtube' | 'file' | 'text' | 'image' | 'scan';
 type OutputType = 'notes' | 'summary' | 'flashcards' | 'mindmap' | 'questions';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -57,6 +61,11 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
   const [selectedImageName, setSelectedImageName] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [activeModal, setActiveModal] = useState<InputMethod | null>(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState<'idle' | 'extracting' | 'sending' | 'generating' | 'preparing' | 'done'>('idle');
+  const [transcript, setTranscript] = useState<{ name: string; content: string; source: 'youtube' | 'pdf' | 'text' } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,12 +80,198 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+
+  // Helper function to get YouTube video ID
+  const getYouTubeVideoId = (url: string) => {
+    const urlParams = new URLSearchParams(new URL(url).search);
+    return urlParams.get('v');
+  };
+
+  // Helper function to extract text from PDF
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      // Try Supabase Edge Function first
+      const form = new FormData();
+      form.append('file', file);
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL?.replace('/project', '')}/functions/v1/extract-pdf`;
+      const resp = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: form,
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        return json.text || '';
+      } else {
+        throw new Error('edge-fn-failed');
+      }
+    } catch {
+      // Fallback to local pdfjs
+      try {
+        const dataBuffer = await file.arrayBuffer();
+        const pdf = await (pdfjsLib as any).getDocument(dataBuffer).promise;
+        let textContent = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const text = await page.getTextContent();
+          textContent += text.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
+          textContent += '\n';
+        }
+        return textContent;
+      } catch (error) {
+        throw new Error('Failed to parse PDF file.');
+      }
+    }
+  };
+
+  // Helper function to get YouTube transcript
+  const getYouTubeTranscript = async (url: string): Promise<string> => {
+    const errors: string[] = [];
+    
+    // 1) Try Python transcript service first (yt-dlp based)
+    try {
+      const pyUrl = import.meta.env.VITE_PY_TRANSCRIPT_URL as string | undefined;
+      console.log('Python transcript URL:', pyUrl);
+      if (pyUrl) {
+        // First, try to check if the service is running
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const healthCheck = await fetch(`${pyUrl.replace(/\/$/, '')}/health`, {
+            method: 'GET',
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          console.log('Python service health check:', healthCheck.status);
+        } catch (healthError) {
+          console.log('Python service health check failed:', healthError);
+        }
+
+        console.log('Trying Python transcript service at:', `${pyUrl.replace(/\/$/, '')}/youtube-transcript`);
+        const r = await fetch(`${pyUrl.replace(/\/$/, '')}/youtube-transcript`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        console.log('Python service response status:', r.status);
+        if (r.ok) {
+          const json = await r.json();
+          console.log('Python service response:', json);
+          if (json.text && json.text.trim()) {
+            console.log('Successfully got transcript from Python service');
+            return json.text;
+          } else {
+            errors.push('Python service returned empty transcript');
+          }
+        } else {
+          const errorText = await r.text();
+          console.error('Python service error:', errorText);
+          errors.push(`Python service: ${r.status} - ${errorText}`);
+        }
+      } else {
+        console.log('Python service URL not configured in environment variables');
+        errors.push('Python service URL not configured');
+      }
+    } catch (error) {
+      console.error('Python service exception:', error);
+      errors.push(`Python service: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // 2) Try Supabase Edge Function as secondary
+    try {
+      console.log('Trying Supabase Edge Function...');
+      const ytFnUrl = `${import.meta.env.VITE_SUPABASE_URL?.replace('/project', '')}/functions/v1/youtube-transcript`;
+      const resp = await fetch(ytFnUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url })
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.text && json.text.trim()) {
+          console.log('Successfully got transcript from Supabase function');
+          return json.text;
+        }
+      } else {
+        const errorText = await resp.text();
+        errors.push(`Supabase function: ${resp.status} - ${errorText}`);
+      }
+    } catch (error) {
+      errors.push(`Supabase function: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // 3) Try direct yt-dlp approach (if Python service is available but failed)
+    try {
+      console.log('Trying direct yt-dlp approach...');
+      const pyUrl = import.meta.env.VITE_PY_TRANSCRIPT_URL as string | undefined;
+      if (pyUrl) {
+        // Try a different endpoint or method
+        const r = await fetch(`${pyUrl.replace(/\/$/, '')}/transcript`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ youtube_url: url })
+        });
+        if (r.ok) {
+          const json = await r.json();
+          if (json.transcript && json.transcript.trim()) {
+            console.log('Successfully got transcript from direct yt-dlp');
+            return json.transcript;
+          }
+        }
+      }
+    } catch (error) {
+      errors.push(`Direct yt-dlp: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // 4) Fallback to AssemblyAI via local helper (only if local server is available)
+    try {
+      console.log('Trying AssemblyAI fallback...');
+      const proxyResponse = await fetch('http://localhost:3001/api/get-audio-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtubeUrl: url }),
+      });
+
+      if (proxyResponse.ok) {
+        const { audioUrl } = await proxyResponse.json();
+        const response = await fetch('https://api.assemblyai.com/v2/transcript', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'cfbb8869df1a442cbb1f318dc3769eb0',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ audio: audioUrl, speech_model: 'universal' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.status === 'completed' && result.text) {
+            console.log('Successfully got transcript from AssemblyAI');
+            return result.text;
+          }
+        }
+      }
+    } catch (error) {
+      errors.push(`AssemblyAI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // If all methods fail, provide a helpful error message
+    const errorMessage = `All transcript methods failed. Errors: ${errors.join('; ')}`;
+    console.error('YouTube transcript extraction failed:', errorMessage);
+    throw new Error(errorMessage);
+  };
+
   const hasValidInput = () => {
     if (inputMethod === 'youtube') return youtubeUrl.trim() !== '';
     if (inputMethod === 'text') return textInput.trim() !== '';
-    if (inputMethod === 'file') return fileInputRef.current?.files?.length > 0;
-    if (inputMethod === 'image') return imageInputRef.current?.files?.length > 0;
-    if (inputMethod === 'scan') return true; // Scan is always valid once selected
+    if (inputMethod === 'file') return selectedFile !== null;
+    if (inputMethod === 'image') return selectedImage !== null;
+    if (inputMethod === 'scan') return selectedImage !== null; // Scan uses selectedImage
     return false;
   };
 
@@ -90,8 +285,10 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
       setInputMethod('file');
-      setSelectedFileName(e.target.files[0].name);
+      setSelectedFileName(file.name);
+      setSelectedFile(file);
       setActiveModal(null);
     }
   };
@@ -102,8 +299,10 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
       setInputMethod('image');
-      setSelectedImageName(e.target.files[0].name);
+      setSelectedImageName(file.name);
+      setSelectedImage(file);
       setActiveModal(null);
     }
   };
@@ -221,6 +420,7 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
             const file = new File([blob], 'scanned-document.jpg', { type: 'image/jpeg' });
             setInputMethod('image');
             setSelectedImageName('scanned-document.jpg');
+            setSelectedImage(file);
             
             // Stop camera and remove overlay
             stream.getTracks().forEach(track => track.stop());
@@ -260,113 +460,117 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
     if (!canGenerate() || !user) return;
     
     setIsGenerating(true);
+    setProcessingStage('extracting');
+    setProcessingProgress(5);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      let sourceContent = '';
+      let sourceName = '';
       
-      // Generate mock content based on selected outputs
+      // Extract content based on input method
+      if (inputMethod === 'youtube') {
+        setProcessingProgress(10);
+        toast.info('Fetching YouTube transcript...');
+        try {
+          sourceContent = await getYouTubeTranscript(youtubeUrl);
+          const videoId = getYouTubeVideoId(youtubeUrl) || 'video';
+          sourceName = `YouTube: ${videoId}`;
+          setTranscript({ name: `${videoId}_transcript.txt`, content: sourceContent, source: 'youtube' });
+          setProcessingProgress(30);
+        } catch (error) {
+          console.error('YouTube transcript failed:', error);
+          toast.error('Failed to get YouTube transcript automatically. Please try a different video or check if the video has captions.');
+          
+          // Show a dialog to allow manual transcript input
+          const manualTranscript = prompt(
+            'Automatic transcript extraction failed. This could be because:\n\n' +
+            '• The YouTube video doesn\'t have captions\n' +
+            '• The transcript service is not running\n' +
+            '• Network connectivity issues\n\n' +
+            'You can:\n' +
+            '1. Try a different YouTube video with captions\n' +
+            '2. Manually paste the transcript text below\n' +
+            '3. Cancel to try a different input method\n\n' +
+            'If you want to paste transcript manually, enter it below:'
+          );
+          
+          if (manualTranscript && manualTranscript.trim()) {
+            sourceContent = manualTranscript.trim();
+            const videoId = getYouTubeVideoId(youtubeUrl) || 'video';
+            sourceName = `YouTube: ${videoId} (Manual)`;
+            setTranscript({ name: `${videoId}_transcript_manual.txt`, content: sourceContent, source: 'youtube' });
+            setProcessingProgress(30);
+            toast.success('Using manually entered transcript');
+          } else {
+            throw new Error('No transcript available. Please try a different video or input method.');
+          }
+        }
+      } else if (inputMethod === 'file' && selectedFile) {
+        setProcessingProgress(10);
+        toast.info('Extracting text from document...');
+        sourceContent = await extractTextFromPDF(selectedFile);
+        sourceName = selectedFile.name;
+        setTranscript({ name: selectedFile.name, content: sourceContent, source: 'pdf' });
+        setProcessingProgress(30);
+      } else if (inputMethod === 'text') {
+        sourceContent = textInput;
+        sourceName = 'Custom Text';
+        setTranscript({ name: 'custom_text.txt', content: sourceContent, source: 'text' });
+        setProcessingProgress(30);
+      } else if (inputMethod === 'image' && selectedImage) {
+        // For images, we'll convert to base64 and send to AI
+        const reader = new FileReader();
+        sourceContent = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedImage);
+        });
+        sourceName = selectedImage.name;
+        setProcessingProgress(30);
+      } else if (inputMethod === 'scan' && selectedImage) {
+        // Same as image processing
+        const reader = new FileReader();
+        sourceContent = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedImage);
+        });
+        sourceName = 'Scanned Document';
+        setProcessingProgress(30);
+      }
+      
+      setProcessingStage('sending');
+      setProcessingProgress(40);
+      
+      // Generate content for each selected output type
       const generatedContentData: GeneratedContentData = {};
       
-      selectedOutputs.forEach(outputType => {
-        switch (outputType) {
-          case 'notes':
-            generatedContentData.notes = {
-              title: `Notes from ${inputMethod}`,
-              sections: [
-                {
-                  heading: 'Main Topic',
-                  content: 'This is a sample note generated from your input. In a real implementation, this would be processed by AI to extract key information and structure it into comprehensive study notes.',
-                  subSections: [
-                    {
-                      heading: 'Key Concept 1',
-                      content: 'Detailed explanation of the first key concept.'
-                    },
-                    {
-                      heading: 'Key Concept 2',
-                      content: 'Detailed explanation of the second key concept.'
-                    }
-                  ]
-                }
-              ],
-              keyPoints: [
-                'Important point 1 from the content',
-                'Important point 2 from the content',
-                'Important point 3 from the content'
-              ],
-              references: ['Reference 1', 'Reference 2']
-            };
-            break;
-            
-          case 'summary':
-            generatedContentData.summary = {
-              overview: 'This is a comprehensive summary of the content you provided. It captures the main ideas and key information in a concise format.',
-              keyPoints: [
-                'Key point 1: Main idea or concept',
-                'Key point 2: Supporting information',
-                'Key point 3: Additional details',
-                'Key point 4: Conclusion or implications'
-              ],
-              mainTopics: ['Topic 1', 'Topic 2', 'Topic 3'],
-              conclusion: 'This summary provides a structured overview of the main content and its implications.'
-            };
-            break;
-            
-          case 'flashcards':
-            generatedContentData.flashcards = Array.from({ length: 5 }, (_, i) => ({
-              id: `card_${i + 1}`,
-              front: `Question ${i + 1}: What is the main concept?`,
-              back: `Answer ${i + 1}: This is the detailed answer explaining the concept.`,
-              difficulty: difficulty,
-              category: 'General'
-            }));
-            break;
-            
-          case 'mindmap':
-            generatedContentData.mindmap = {
-              title: 'Content Mind Map',
-              centralTopic: 'Main Topic',
-              branches: [
-                {
-                  id: 'branch_1',
-                  label: 'Branch 1',
-                  subBranches: [
-                    { id: 'sub_1_1', label: 'Sub-branch 1.1', subBranches: [] },
-                    { id: 'sub_1_2', label: 'Sub-branch 1.2', subBranches: [] }
-                  ]
-                },
-                {
-                  id: 'branch_2',
-                  label: 'Branch 2',
-                  subBranches: [
-                    { id: 'sub_2_1', label: 'Sub-branch 2.1', subBranches: [] }
-                  ]
-                }
-              ]
-            };
-            break;
-            
-          case 'questions':
-            generatedContentData.questions = Array.from({ length: questionCount[0] }, (_, i) => ({
-              id: `q_${i + 1}`,
-              question: `Sample question ${i + 1}: What is the main concept being discussed?`,
-              options: ['Option A', 'Option B', 'Option C', 'Option D'],
-              correctAnswer: 0,
-              explanation: `This is the explanation for question ${i + 1}. The correct answer is Option A because...`,
-              difficulty: difficulty,
-              type: 'multiple-choice' as const
-            }));
-            break;
+      for (const outputType of selectedOutputs) {
+        setProcessingStage('generating');
+        setProcessingProgress(50 + (selectedOutputs.indexOf(outputType) * 10));
+        
+        const prompt = generatePromptForOutputType(outputType, sourceContent, sourceName, difficulty, questionCount[0]);
+        
+        try {
+          const aiResponse = await aiChatService.sendMessage(prompt);
+          const parsedContent = parseAIResponse(aiResponse, outputType);
+          generatedContentData[outputType as keyof GeneratedContentData] = parsedContent;
+        } catch (error) {
+          console.error(`Error generating ${outputType}:`, error);
+          toast.error(`Failed to generate ${outputType}. Please try again.`);
         }
-      });
+      }
+      
+      setProcessingStage('preparing');
+      setProcessingProgress(90);
       
       // Create generated content for each output type
       selectedOutputs.forEach(outputType => {
         const title = `${outputType.charAt(0).toUpperCase() + outputType.slice(1)} from ${inputMethod}`;
-        const inputSource = inputMethod === 'youtube' ? youtubeUrl : 
+        const inputSource: string = inputMethod === 'youtube' ? youtubeUrl : 
                            inputMethod === 'text' ? textInput.substring(0, 50) + '...' :
-                           inputMethod === 'file' ? selectedFileName :
-                           inputMethod === 'image' ? selectedImageName :
+                           inputMethod === 'file' ? selectedFileName || 'Unknown File' :
+                           inputMethod === 'image' ? selectedImageName || 'Unknown Image' :
                            'Document Scan';
         
         const generatedContent = createGeneratedContentFromSmartStudyHub(
@@ -376,7 +580,7 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
           inputMethod as InputMethod,
           inputSource,
           { [outputType]: generatedContentData[outputType as keyof GeneratedContentData] },
-          [inputMethod, outputType, difficulty]
+          [inputMethod || 'unknown', outputType, difficulty]
         );
         
         // Save to storage
@@ -387,6 +591,11 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
         saveLibraryItem(libraryItem);
       });
       
+      setProcessingStage('done');
+      setProcessingProgress(100);
+      
+      toast.success('Content generated successfully!');
+      
       // Reset form
       setInputMethod(null);
       setYoutubeUrl('');
@@ -394,6 +603,9 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
       setSelectedOutputs([]);
       setSelectedFileName('');
       setSelectedImageName('');
+      setSelectedFile(null);
+      setSelectedImage(null);
+      setTranscript(null);
       
       // Notify parent component
       if (onContentGenerated) {
@@ -402,8 +614,215 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
       
     } catch (error) {
       console.error('Error generating content:', error);
+      toast.error(`Error generating content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
+      setProcessingStage('idle');
+      setTimeout(() => setProcessingProgress(0), 500);
+    }
+  };
+
+  // Helper function to generate prompts for different output types
+  const generatePromptForOutputType = (outputType: OutputType, sourceContent: string, sourceName: string, difficulty: Difficulty, questionCount: number): string => {
+    const basePrompt = `Based on the following content from "${sourceName}", generate ${outputType}. IMPORTANT: Always produce the final output in English, even if the source content is in another language.`;
+    
+    switch (outputType) {
+      case 'notes':
+        return `${basePrompt}
+        
+        Create comprehensive study notes with the following structure:
+        - Title: A descriptive title for the notes
+        - Sections: Main topics with headings, content, and sub-sections
+        - Key Points: Important takeaways
+        - References: Any sources mentioned
+        
+        Format as JSON:
+        {
+          "title": "...",
+          "sections": [
+            {
+              "heading": "...",
+              "content": "...",
+              "subSections": [
+                {
+                  "heading": "...",
+                  "content": "..."
+                }
+              ]
+            }
+          ],
+          "keyPoints": ["...", "...", "..."],
+          "references": ["...", "..."]
+        }
+        
+        Content:
+        ${sourceContent}`;
+        
+      case 'summary':
+        return `${basePrompt}
+        
+        Create a comprehensive summary with:
+        - Overview: Brief description of the main content
+        - Key Points: Important concepts and ideas
+        - Main Topics: Primary subjects covered
+        - Conclusion: Summary of implications or conclusions
+        
+        Format as JSON:
+        {
+          "overview": "...",
+          "keyPoints": ["...", "...", "..."],
+          "mainTopics": ["...", "...", "..."],
+          "conclusion": "..."
+        }
+        
+        Content:
+        ${sourceContent}`;
+        
+      case 'flashcards':
+        return `${basePrompt}
+        
+        Create ${questionCount} flashcards with:
+        - Front: Question or concept
+        - Back: Answer or explanation
+        - Difficulty: ${difficulty}
+        - Category: Relevant subject area
+        
+        Format as JSON array:
+        [
+          {
+            "id": "card_1",
+            "front": "...",
+            "back": "...",
+            "difficulty": "${difficulty}",
+            "category": "..."
+          }
+        ]
+        
+        Content:
+        ${sourceContent}`;
+        
+      case 'mindmap':
+        return `${basePrompt}
+        
+        Create a mind map structure with:
+        - Title: Main topic title
+        - Central Topic: Core concept
+        - Branches: Main themes with sub-branches
+        
+        Format as JSON:
+        {
+          "title": "...",
+          "centralTopic": "...",
+          "branches": [
+            {
+              "id": "branch_1",
+              "label": "...",
+              "subBranches": [
+                {
+                  "id": "sub_1_1",
+                  "label": "...",
+                  "subBranches": []
+                }
+              ]
+            }
+          ]
+        }
+        
+        Content:
+        ${sourceContent}`;
+        
+      case 'questions':
+        return `${basePrompt}
+        
+        Create ${questionCount} multiple-choice questions with:
+        - Question: Clear, standalone question
+        - Options: 4 answer choices
+        - Correct Answer: Index of correct option (0-3)
+        - Explanation: Why the answer is correct
+        - Difficulty: ${difficulty}
+        - Type: "multiple-choice"
+        
+        Format as JSON array:
+        [
+          {
+            "id": "q_1",
+            "question": "...",
+            "options": ["...", "...", "...", "..."],
+            "correctAnswer": 0,
+            "explanation": "...",
+            "difficulty": "${difficulty}",
+            "type": "multiple-choice"
+          }
+        ]
+        
+        Content:
+        ${sourceContent}`;
+        
+      default:
+        return basePrompt;
+    }
+  };
+
+  // Helper function to parse AI responses
+  const parseAIResponse = (response: string, outputType: OutputType): any => {
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      // If no JSON found, return a fallback structure
+      switch (outputType) {
+        case 'notes':
+          return {
+            title: 'Generated Notes',
+            sections: [{ heading: 'Main Content', content: response }],
+            keyPoints: ['Key point extracted from content'],
+            references: []
+          };
+        case 'summary':
+          return {
+            overview: response.substring(0, 200) + '...',
+            keyPoints: ['Key point 1', 'Key point 2'],
+            mainTopics: ['Topic 1', 'Topic 2'],
+            conclusion: 'Summary conclusion'
+          };
+        case 'flashcards':
+          return [{
+            id: 'card_1',
+            front: 'Question from content',
+            back: response.substring(0, 100),
+            difficulty: difficulty,
+            category: 'General'
+          }];
+        case 'mindmap':
+          return {
+            title: 'Content Mind Map',
+            centralTopic: 'Main Topic',
+            branches: [{
+              id: 'branch_1',
+              label: 'Main Branch',
+              subBranches: []
+            }]
+          };
+        case 'questions':
+          return [{
+            id: 'q_1',
+            question: 'Sample question from content',
+            options: ['Option A', 'Option B', 'Option C', 'Option D'],
+            correctAnswer: 0,
+            explanation: response.substring(0, 100),
+            difficulty: difficulty,
+            type: 'multiple-choice'
+          }];
+        default:
+          return {};
+      }
+    } catch (error) {
+      console.error('Error parsing AI response:', error);
+      // Return fallback content
+      return parseAIResponse('', outputType);
     }
   };
 
@@ -636,6 +1055,9 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
                       setTextInput('');
                       setSelectedFileName('');
                       setSelectedImageName('');
+                      setSelectedFile(null);
+                      setSelectedImage(null);
+                      setTranscript(null);
                     }}
                     className={isMobile ? 'p-1' : ''}
                   >
@@ -782,6 +1204,49 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
         )}
       </AnimatePresence>
 
+      {/* Processing Status */}
+      {isGenerating && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <Card className="border-2">
+            <CardContent className="p-4 sm:p-6">
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Brain className="h-5 w-5 text-primary animate-pulse" />
+                    <span className="font-semibold text-foreground">
+                      {processingStage === 'extracting' && 'Extracting Content...'}
+                      {processingStage === 'sending' && 'Sending to AI...'}
+                      {processingStage === 'generating' && 'Generating Content...'}
+                      {processingStage === 'preparing' && 'Preparing Results...'}
+                      {processingStage === 'done' && 'Completed!'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${processingProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {processingProgress}% Complete
+                  </p>
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                  <p>• Processing your input content</p>
+                  <p>• Analyzing with AI</p>
+                  <p>• Generating study materials</p>
+                  <p>• Preparing for your library</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Generate Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -801,9 +1266,9 @@ export function SmartStudyHub({ className, user, onContentGenerated }: SmartStud
         >
           {isGenerating ? (
             <>
-              <div className={`animate-spin rounded-full border-b-2 border-white mr-2 ${
+              <Loader2 className={`animate-spin mr-2 ${
                 isMobile ? 'h-4 w-4' : 'h-5 w-5'
-              }`}></div>
+              }`} />
               Generating...
             </>
           ) : (

@@ -14,7 +14,7 @@ export const studentMenuItems = [
   { id: 'ai-assistant', label: 'Aspire Ai', icon: Bot },
   { id: 'smart-study-hub', label: 'Smart Study Hub', icon: Sparkles },
   { id: 'library', label: 'My Library', icon: Notebook },
-  { id: 'notebooks', label: 'Admin Library', icon: Notebook },
+  { id: 'notebooks', label: 'Materials', icon: Notebook },
   { id: 'tests', label: 'Tests', icon: TestTube2 },
 ];
 
