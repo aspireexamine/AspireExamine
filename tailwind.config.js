@@ -21,7 +21,8 @@ export default {
   			],
   			mono: [
   				'var(--font-mono)'
-  			]
+  			],
+  			heading: ['Syne', 'sans-serif']
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -78,7 +79,26 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			cream: '#FFFDF7',
+  			pastel: {
+  				pink: '#FFDBEB',
+  				lilac: '#DCCBFF',
+  				yellow: '#FFF279',
+  				green: '#DDFCE5',
+  				purple: '#9D71FD',
+  				dark: '#111111',
+  				gray: '#F9F9F9'
   			}
+  		},
+  		boxShadow: {
+  			...require('tailwindcss/defaultTheme').boxShadow,
+  			'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+  			'card': '0 20px 40px -15px rgba(0,0,0,0.1)',
+  			'glow': '0 0 20px rgba(157, 113, 253, 0.3)',
+  		},
+  		backgroundImage: {
+  			'noise': "url('https://grainy-gradients.vercel.app/noise.svg')",
   		},
   		keyframes: {
   			'accordion-down': {
@@ -100,7 +120,10 @@ export default {
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'blob': 'blob 7s infinite',
+  			'spin-slow': 'spin 12s linear infinite',
+  			'float': 'float 6s ease-in-out infinite',
   		}
   	},
   	keyframes: {
@@ -137,6 +160,16 @@ export default {
   			'50%': {
   				opacity: '0'
   			}
+  		},
+  		blob: {
+  			'0%': { transform: 'translate(0px, 0px) scale(1)' },
+  			'33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+  			'66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+  			'100%': { transform: 'translate(0px, 0px) scale(1)' },
+  		},
+  		float: {
+  			'0%, 100%': { transform: 'translateY(0)' },
+  			'50%': { transform: 'translateY(-20px)' },
   		}
   	},
   	'text-blink': {

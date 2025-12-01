@@ -284,15 +284,48 @@ def youtube_audio_url(body: Body):
     video_id = extract_id(body.url)
     if not video_id:
         raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
-    if not PYTUBE_AVAILABLE:
-        raise HTTPException(status_code=501, detail="pytube not installed on server")
-    try:
-        yt = YouTube(f"https://www.youtube.com/watch?v={video_id}")
-        stream = yt.streams.filter(only_audio=True).order_by("abr").desc().first()
-        if not stream:
-            raise HTTPException(status_code=404, detail="No audio stream found")
-        return {"videoId": video_id, "audioUrl": stream.url}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    # Try yt-dlp first (more reliable)
+    if YTDLP_AVAILABLE:
+        try:
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': False,
+                'format': 'bestaudio/best',
+                'nocheckcertificate': True,
+                'ignoreerrors': True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
+                if info and 'url' in info:
+                    return {"videoId": video_id, "audioUrl": info['url']}
+                elif info and 'formats' in info:
+                    # Try to find audio format
+                    for fmt in info['formats']:
+                        if fmt.get('acodec') != 'none' and fmt.get('url'):
+                            return {"videoId": video_id, "audioUrl": fmt['url']}
+        except Exception as e:
+            print(f"yt-dlp failed: {e}")
+    
+    # Fallback to pytube if yt-dlp fails
+    if PYTUBE_AVAILABLE:
+        try:
+            yt = YouTube(f"https://www.youtube.com/watch?v={video_id}")
+            stream = yt.streams.filter(only_audio=True).order_by("abr").desc().first()
+            if not stream:
+                raise HTTPException(status_code=404, detail="No audio stream found")
+            return {"videoId": video_id, "audioUrl": stream.url}
+        except Exception as e:
+            print(f"pytube failed: {e}")
+    
+    # If both methods fail, return a helpful error message
+    raise HTTPException(
+        status_code=503, 
+        detail="YouTube audio extraction is currently unavailable due to YouTube API changes. Please try again later or use a different video."
+    )
 
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

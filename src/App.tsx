@@ -11,6 +11,54 @@ import { STREAMS, SAMPLE_RESULTS } from '@/utils/constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getCartoonAvatar } from '@/utils/avatarUtils';
 import { LandingPage } from './components/landing/LandingPage';
+import { LandingLayout } from './components/landing/LandingLayout';
+import HelpCenter from './components/landing/pages/HelpCenter';
+import ContactUs from './components/landing/pages/ContactUs';
+import FAQ from './components/landing/pages/FAQ';
+import TermsOfService from './components/landing/pages/TermsOfService';
+import PrivacyPolicy from './components/landing/pages/PrivacyPolicy';
+// Help Articles - Getting Started
+import AccountSetup from './components/landing/pages/help/getting-started/AccountSetup';
+import DashboardNavigation from './components/landing/pages/help/getting-started/DashboardNavigation';
+import SelectingStream from './components/landing/pages/help/getting-started/SelectingStream';
+import InterfaceOverview from './components/landing/pages/help/getting-started/InterfaceOverview';
+import ProfileSetup from './components/landing/pages/help/getting-started/ProfileSetup';
+import MobileAccess from './components/landing/pages/help/getting-started/MobileAccess';
+// Help Articles - Practice Tests
+import AttemptingTests from './components/landing/pages/help/practice-tests/AttemptingTests';
+import TestModes from './components/landing/pages/help/practice-tests/TestModes';
+import QuestionPalette from './components/landing/pages/help/practice-tests/QuestionPalette';
+import ReviewingAnswers from './components/landing/pages/help/practice-tests/ReviewingAnswers';
+import PerformanceAnalytics from './components/landing/pages/help/practice-tests/PerformanceAnalytics';
+import PDFReports from './components/landing/pages/help/practice-tests/PDFReports';
+import TestSeries from './components/landing/pages/help/practice-tests/TestSeries';
+import PreviousYearQuestions from './components/landing/pages/help/practice-tests/PreviousYearQuestions';
+// Help Articles - AI Assistant
+import AIAssistantGettingStarted from './components/landing/pages/help/ai-assistant/GettingStarted';
+import ChatHistory from './components/landing/pages/help/ai-assistant/ChatHistory';
+import AskingQuestions from './components/landing/pages/help/ai-assistant/AskingQuestions';
+import ModelSelection from './components/landing/pages/help/ai-assistant/ModelSelection';
+import Attachments from './components/landing/pages/help/ai-assistant/Attachments';
+import SuggestedActions from './components/landing/pages/help/ai-assistant/SuggestedActions';
+// Help Articles - Study Hub
+import YouTubeExtraction from './components/landing/pages/help/study-hub/YouTubeExtraction';
+import PDFProcessing from './components/landing/pages/help/study-hub/PDFProcessing';
+import GeneratingNotes from './components/landing/pages/help/study-hub/GeneratingNotes';
+import Flashcards from './components/landing/pages/help/study-hub/Flashcards';
+import MindMaps from './components/landing/pages/help/study-hub/MindMaps';
+import PracticeQuestions from './components/landing/pages/help/study-hub/PracticeQuestions';
+import LibraryOrganization from './components/landing/pages/help/study-hub/LibraryOrganization';
+// Help Articles - Analytics
+import TestResults from './components/landing/pages/help/analytics/TestResults';
+import SubjectAnalysis from './components/landing/pages/help/analytics/SubjectAnalysis';
+import ProgressTracking from './components/landing/pages/help/analytics/ProgressTracking';
+import WeakAreas from './components/landing/pages/help/analytics/WeakAreas';
+import Statistics from './components/landing/pages/help/analytics/Statistics';
+// Help Articles - Account
+import ProfileUpdates from './components/landing/pages/help/account/ProfileUpdates';
+import AccountSettings from './components/landing/pages/help/account/AccountSettings';
+import PrivacySecurity from './components/landing/pages/help/account/PrivacySecurity';
+import DataManagement from './components/landing/pages/help/account/DataManagement';
 import { LoginPage } from './LoginPage';
 import Squares from '@/components/Squares';
 import { supabase } from './lib/supabaseClient';
@@ -400,6 +448,108 @@ const AppContent = () => {
       <div className="relative z-10 min-h-screen">
         <Routes>
           <Route path="/" element={<LandingPage onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')} />} />
+          <Route 
+            path="/help" 
+            element={
+              <LandingLayout 
+                onGetStarted={() => navigate('/login')} 
+                onLogin={() => navigate('/login')} 
+                onSignup={() => navigate('/login')}
+              >
+                <HelpCenter />
+              </LandingLayout>
+            } 
+          />
+          {/* Help Articles - Getting Started */}
+          <Route path="/help/getting-started/account-setup" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><AccountSetup /></LandingLayout>} />
+          <Route path="/help/getting-started/dashboard-navigation" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><DashboardNavigation /></LandingLayout>} />
+          <Route path="/help/getting-started/selecting-stream" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><SelectingStream /></LandingLayout>} />
+          <Route path="/help/getting-started/interface-overview" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><InterfaceOverview /></LandingLayout>} />
+          <Route path="/help/getting-started/profile-setup" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ProfileSetup /></LandingLayout>} />
+          <Route path="/help/getting-started/mobile-access" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><MobileAccess /></LandingLayout>} />
+          {/* Help Articles - Practice Tests */}
+          <Route path="/help/practice-tests/attempting-tests" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><AttemptingTests /></LandingLayout>} />
+          <Route path="/help/practice-tests/test-modes" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><TestModes /></LandingLayout>} />
+          <Route path="/help/practice-tests/question-palette" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><QuestionPalette /></LandingLayout>} />
+          <Route path="/help/practice-tests/reviewing-answers" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ReviewingAnswers /></LandingLayout>} />
+          <Route path="/help/practice-tests/performance-analytics" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PerformanceAnalytics /></LandingLayout>} />
+          <Route path="/help/practice-tests/pdf-reports" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PDFReports /></LandingLayout>} />
+          <Route path="/help/practice-tests/test-series" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><TestSeries /></LandingLayout>} />
+          <Route path="/help/practice-tests/previous-year-questions" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PreviousYearQuestions /></LandingLayout>} />
+          {/* Help Articles - AI Assistant */}
+          <Route path="/help/ai-assistant/getting-started" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><AIAssistantGettingStarted /></LandingLayout>} />
+          <Route path="/help/ai-assistant/chat-history" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ChatHistory /></LandingLayout>} />
+          <Route path="/help/ai-assistant/asking-questions" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><AskingQuestions /></LandingLayout>} />
+          <Route path="/help/ai-assistant/model-selection" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ModelSelection /></LandingLayout>} />
+          <Route path="/help/ai-assistant/attachments" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><Attachments /></LandingLayout>} />
+          <Route path="/help/ai-assistant/suggested-actions" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><SuggestedActions /></LandingLayout>} />
+          {/* Help Articles - Study Hub */}
+          <Route path="/help/study-hub/youtube-extraction" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><YouTubeExtraction /></LandingLayout>} />
+          <Route path="/help/study-hub/pdf-processing" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PDFProcessing /></LandingLayout>} />
+          <Route path="/help/study-hub/generating-notes" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><GeneratingNotes /></LandingLayout>} />
+          <Route path="/help/study-hub/flashcards" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><Flashcards /></LandingLayout>} />
+          <Route path="/help/study-hub/mind-maps" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><MindMaps /></LandingLayout>} />
+          <Route path="/help/study-hub/practice-questions" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PracticeQuestions /></LandingLayout>} />
+          <Route path="/help/study-hub/library-organization" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><LibraryOrganization /></LandingLayout>} />
+          {/* Help Articles - Analytics */}
+          <Route path="/help/analytics/test-results" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><TestResults /></LandingLayout>} />
+          <Route path="/help/analytics/subject-analysis" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><SubjectAnalysis /></LandingLayout>} />
+          <Route path="/help/analytics/progress-tracking" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ProgressTracking /></LandingLayout>} />
+          <Route path="/help/analytics/weak-areas" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><WeakAreas /></LandingLayout>} />
+          <Route path="/help/analytics/statistics" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><Statistics /></LandingLayout>} />
+          {/* Help Articles - Account */}
+          <Route path="/help/account/profile-updates" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><ProfileUpdates /></LandingLayout>} />
+          <Route path="/help/account/account-settings" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><AccountSettings /></LandingLayout>} />
+          <Route path="/help/account/privacy-security" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><PrivacySecurity /></LandingLayout>} />
+          <Route path="/help/account/data-management" element={<LandingLayout onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')}><DataManagement /></LandingLayout>} />
+          <Route 
+            path="/contact" 
+            element={
+              <LandingLayout 
+                onGetStarted={() => navigate('/login')} 
+                onLogin={() => navigate('/login')} 
+                onSignup={() => navigate('/login')}
+              >
+                <ContactUs />
+              </LandingLayout>
+            } 
+          />
+          <Route 
+            path="/faq" 
+            element={
+              <LandingLayout 
+                onGetStarted={() => navigate('/login')} 
+                onLogin={() => navigate('/login')} 
+                onSignup={() => navigate('/login')}
+              >
+                <FAQ />
+              </LandingLayout>
+            } 
+          />
+          <Route 
+            path="/terms" 
+            element={
+              <LandingLayout 
+                onGetStarted={() => navigate('/login')} 
+                onLogin={() => navigate('/login')} 
+                onSignup={() => navigate('/login')}
+              >
+                <TermsOfService />
+              </LandingLayout>
+            } 
+          />
+          <Route 
+            path="/privacy" 
+            element={
+              <LandingLayout 
+                onGetStarted={() => navigate('/login')} 
+                onLogin={() => navigate('/login')} 
+                onSignup={() => navigate('/login')}
+              >
+                <PrivacyPolicy />
+              </LandingLayout>
+            } 
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/student"
