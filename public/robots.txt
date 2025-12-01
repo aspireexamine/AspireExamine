@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://aspireexamine.com/sitemap.xml
+
+# Disallow admin and private routes
+Disallow: /admin/
+Disallow: /student/
+Disallow: /login
+
+# Allow important pages
+Allow: /
+Allow: /help
+Allow: /contact
+Allow: /faq
+Allow: /terms
+Allow: /privacy
+
