@@ -14,8 +14,19 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState('Home');
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Detect actual mobile device (not just screen width) for performance optimizations
+  useEffect(() => {
+    const checkMobileDevice = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobileDevice(isMobileUA);
+    };
+    checkMobileDevice();
+  }, []);
 
   // Handle window resize for responsive width logic - throttled
   useEffect(() => {
@@ -34,11 +45,15 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
     };
   }, []);
 
-  // Hysteresis Scroll Logic to prevent flutter - optimized
+  // Hysteresis Scroll Logic to prevent flutter - optimized with throttling
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (latest) => {
-    if (latest > 50 && !isScrolled) setIsScrolled(true);
-    else if (latest < 30 && isScrolled) setIsScrolled(false);
+    // Throttle state updates to reduce re-renders
+    if (latest > 50 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (latest < 30 && isScrolled) {
+      setIsScrolled(false);
+    }
   });
 
   const navLinks = useMemo(() => ['Home', 'Features', 'About', 'Contact'], []);
@@ -67,6 +82,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
     }
   }, [location.pathname, navigate]);
 
+  // Reduce backdrop blur on mobile devices even in desktop mode for performance
+  const shouldUseBackdropBlur = !isMobileDevice;
+  const backdropBlurValue = shouldUseBackdropBlur ? "blur(16px)" : "blur(4px)";
+
   const navbarVariants = useMemo(() => ({
     top: {
       width: isMobile ? "95%" : "90%",
@@ -82,15 +101,15 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
     scrolled: {
       width: isMobile ? "92%" : "65%",
       y: isMobile ? 10 : 20,
-      backgroundColor: "rgba(255, 255, 255, 0.85)",
-      backdropFilter: "blur(16px)",
+      backgroundColor: isMobileDevice ? "rgba(255, 255, 255, 0.95)" : "rgba(255, 255, 255, 0.85)",
+      backdropFilter: shouldUseBackdropBlur ? backdropBlurValue : "blur(4px)",
       boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)",
       paddingTop: "0.75rem",
       paddingBottom: "0.75rem",
       paddingLeft: "1.25rem",
       paddingRight: "1.25rem",
     }
-  }), [isMobile]);
+  }), [isMobile, isMobileDevice, shouldUseBackdropBlur, backdropBlurValue]);
 
   const toggleMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(prev => !prev);
@@ -100,13 +119,21 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
     setIsMobileMenuOpen(false);
   }, []);
 
-  // Smooth spring transition for navbar state changes
-  const navbarTransition = useMemo(() => ({
-    type: "spring" as const,
-    stiffness: 300,
-    damping: 30,
-    mass: 0.5,
-  }), []);
+  // Smooth spring transition for navbar state changes - simplified on mobile devices
+  const navbarTransition = useMemo(() => {
+    if (isMobileDevice) {
+      return {
+        duration: 0.2,
+        ease: "easeOut" as const,
+      };
+    }
+    return {
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 30,
+      mass: 0.5,
+    };
+  }, [isMobileDevice]);
 
   // Ultra-smooth transition for mobile menu
   const menuTransition = useMemo(() => ({
@@ -133,36 +160,30 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
           className="pointer-events-auto rounded-full flex items-center justify-between border border-transparent"
           style={{ 
             borderColor: isScrolled ? "rgba(255,255,255,0.5)" : "transparent",
-            willChange: 'transform, width, background-color, backdrop-filter'
+            willChange: isMobileDevice ? 'auto' : 'transform, width, background-color, backdrop-filter'
           }}
         >
-          {/* Logo */}
+          {/* Logo - Optimized: removed layout animations on mobile devices */}
           <Link to="/" className="flex items-center gap-2 md:gap-3 cursor-pointer group shrink-0">
             <motion.div 
-              layout
-              layoutId="navbar-logo"
+              {...(isMobileDevice ? {} : { layout: true, layoutId: "navbar-logo" })}
               transition={navbarTransition}
-              className={`flex items-center justify-center rounded-xl border-2 border-pastel-dark shadow-[2px_2px_0px_0px_rgba(17,17,17,1)] ${
+              className={`flex items-center justify-center rounded-xl border-2 border-pastel-dark shadow-[2px_2px_0px_0px_rgba(17,17,17,1)] transition-all duration-300 ${
                 isScrolled ? 'w-8 h-8 bg-pastel-purple text-white' : 'w-9 h-9 md:w-10 md:h-10 bg-pastel-lilac text-pastel-dark'
               }`}
-              style={{ willChange: 'transform, width, height' }}
+              style={isMobileDevice ? {} : { willChange: 'transform, width, height' }}
             >
-              <motion.span 
-                layout
-                className={`font-bold ${isScrolled ? 'text-sm' : 'text-base md:text-lg'}`}
-                transition={navbarTransition}
-              >
+              <span className={`font-bold transition-all duration-300 ${isScrolled ? 'text-sm' : 'text-base md:text-lg'}`}>
                 A
-              </motion.span>
+              </span>
             </motion.div>
             <motion.span 
-              layout
-              layoutId="navbar-brand"
+              {...(isMobileDevice ? {} : { layout: true, layoutId: "navbar-brand" })}
               transition={navbarTransition}
-              className={`font-heading font-bold tracking-tight text-pastel-dark group-hover:text-pastel-purple transition-colors duration-300 ${
+              className={`font-heading font-bold tracking-tight text-pastel-dark group-hover:text-pastel-purple transition-all duration-300 ${
                 isScrolled ? 'text-base md:text-lg' : 'text-lg md:text-2xl'
               }`}
-              style={{ willChange: 'transform, font-size' }}
+              style={isMobileDevice ? {} : { willChange: 'transform, font-size' }}
             >
               AspireExamine
             </motion.span>
@@ -198,9 +219,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
               >
                 {activeLink === link && (
                   <motion.div
-                    layoutId="active-pill"
+                    {...(isMobileDevice ? {} : { layoutId: "active-pill" })}
                     className="absolute inset-0 bg-pastel-dark/5 rounded-full -z-10"
-                    transition={{
+                    transition={isMobileDevice ? { duration: 0.2 } : {
                       type: "spring",
                       stiffness: 500,
                       damping: 30,
@@ -255,28 +276,35 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={backdropTransition}
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+                className={`fixed inset-0 bg-black/20 z-40 md:hidden ${
+                  isMobileDevice ? '' : 'backdrop-blur-sm'
+                }`}
                 onClick={closeMobileMenu}
                 style={{ willChange: 'opacity' }}
             />
             
-            {/* Menu Container */}
+            {/* Menu Container - Reduced blur on mobile devices */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: -10, filter: "blur(8px)" }}
-              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 0.92, y: -10, filter: "blur(8px)" }}
+              initial={{ opacity: 0, scale: 0.92, y: -10, ...(isMobileDevice ? {} : { filter: "blur(8px)" }) }}
+              animate={{ opacity: 1, scale: 1, y: 0, ...(isMobileDevice ? {} : { filter: "blur(0px)" }) }}
+              exit={{ opacity: 0, scale: 0.92, y: -10, ...(isMobileDevice ? {} : { filter: "blur(8px)" }) }}
               transition={menuTransition}
-              className="fixed top-20 left-4 right-4 z-50 bg-white/95 backdrop-blur-xl rounded-[32px] p-6 shadow-2xl border border-white md:hidden overflow-hidden"
-              style={{ willChange: 'transform, opacity, filter' }}
+              className={`fixed top-20 left-4 right-4 z-50 bg-white/95 rounded-[32px] p-6 shadow-2xl border border-white md:hidden overflow-hidden ${
+                isMobileDevice ? '' : 'backdrop-blur-xl'
+              }`}
+              style={{ willChange: isMobileDevice ? 'transform, opacity' : 'transform, opacity, filter' }}
             >
               <div className="flex flex-col gap-2">
                 {navLinks.map((link, i) => (
                   <motion.a 
                     key={link}
-                    initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    transition={{
+                    initial={{ opacity: 0, x: -20, ...(isMobileDevice ? {} : { filter: "blur(4px)" }) }}
+                    animate={{ opacity: 1, x: 0, ...(isMobileDevice ? {} : { filter: "blur(0px)" }) }}
+                    exit={{ opacity: 0, x: -20, ...(isMobileDevice ? {} : { filter: "blur(4px)" }) }}
+                    transition={isMobileDevice ? {
+                      duration: 0.2,
+                      delay: i * 0.02
+                    } : {
                       type: "spring",
                       stiffness: 500,
                       damping: 30,
