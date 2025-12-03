@@ -9,6 +9,12 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
   const socialIcons = useMemo(() => [Facebook, Twitter, Linkedin, Instagram], []);
+  const socialLinks = useMemo(() => [
+    '#', // Facebook
+    'https://x.com/mirtariq2006', // Twitter
+    '#', // LinkedIn
+    'https://www.instagram.com/whos.tariqq/' // Instagram
+  ], []);
   const resourcesLinks = useMemo(() => [
     { name: 'Practice Tests', href: '/login' },
     { name: 'Study Materials', href: '/login' },
@@ -56,7 +62,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
             </p>
             <div className="flex gap-3 sm:gap-4">
               {socialIcons.map((Icon, i) => (
-                <a key={i} href="#" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-pastel-purple hover:text-white transition-colors" aria-label={`Social media link ${i + 1}`}>
+                <a key={i} href={socialLinks[i]} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-pastel-purple hover:text-white transition-colors" aria-label={`Social media link ${i + 1}`}>
                   <Icon size={12} className="sm:w-[14px] sm:h-[14px]" />
                 </a>
               ))}
@@ -66,7 +72,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
           {/* Links */}
           <div className="grid grid-cols-2 sm:grid-cols-1 gap-6 sm:gap-8">
               <div>
-                <h4 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Resources</h4>
+                <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Resources</h3>
                 <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
                   {resourcesLinks.map((link, idx) => (
                     <li key={idx}>
@@ -77,7 +83,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
               </div>
 
               <div>
-                <h4 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Support</h4>
+                <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Support</h3>
                 <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
                   {supportLinks.map((link, idx) => (
                     <li key={idx}>
@@ -89,7 +95,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
           </div>
 
           <div>
-            <h4 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Exam Streams</h4>
+            <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Exam Streams</h3>
             <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></span> NEET Preparation</li>
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></span> JEE Main & Advanced</li>

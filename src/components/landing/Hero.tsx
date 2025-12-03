@@ -186,10 +186,12 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                   <div key={i} className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border-2 border-cream bg-gray-200 overflow-hidden">
                     <img 
                       src={`https://randomuser.me/api/portraits/men/${i*10 + 5}.jpg`} 
-                      alt="Student" 
+                      alt={`AspireExamine student ${i} profile picture`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"
+                      width={36}
+                      height={36}
                     />
                   </div>
                 ))}
@@ -217,11 +219,13 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               <div className="absolute inset-0 bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[48px] border-2 border-pastel-dark overflow-hidden shadow-xl relative">
                 <img 
                   src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1287&auto=format&fit=crop" 
-                  alt="Student studying for competitive exams" 
+                  alt="Female student with headphones studying at desk with laptop, preparing for NEET and JEE competitive exams" 
                   className="w-full h-full object-cover"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
+                  width={1287}
+                  height={1930}
                   sizes="(max-width: 640px) 85vw, (max-width: 1024px) 90vw, 85vw"
                 />
                 

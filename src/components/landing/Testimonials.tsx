@@ -20,13 +20,15 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, ima
   >
     <img 
       src={image} 
-      alt={name} 
+      alt={`${name}, ${role} - AspireExamine student testimonial`}
       className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-pastel-lilac shrink-0" 
       loading="lazy"
       decoding="async"
+      width={64}
+      height={64}
     />
     <div>
-      <h4 className="font-bold text-pastel-dark text-xs sm:text-sm">{name}</h4>
+      <h3 className="font-bold text-pastel-dark text-xs sm:text-sm">{name}</h3>
       <span className="text-[10px] sm:text-xs text-pastel-purple font-semibold mb-1 block">{role}</span>
       <p className="text-gray-500 text-[10px] sm:text-xs leading-relaxed">{text}</p>
     </div>

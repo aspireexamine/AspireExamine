@@ -30,7 +30,7 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-500 mb-2 uppercase tracking-wider">About AspireExamine</h4>
+            <span className="text-sm sm:text-base md:text-lg font-bold text-gray-500 mb-2 uppercase tracking-wider block">About AspireExamine</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-pastel-dark mb-4 sm:mb-6 leading-tight">
               YOUR COMPLETE <br/>
               <span className="text-pastel-purple">EXAM PREPARATION</span> <br/>
@@ -70,16 +70,18 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
                <div className="bg-white rounded-t-[30px] sm:rounded-t-[40px] rounded-b-[120px] sm:rounded-b-[150px] md:rounded-t-full md:rounded-b-[200px] overflow-hidden border-[2px] sm:border-[3px] border-pastel-dark shadow-soft max-w-xs sm:max-w-sm md:max-w-md mx-auto relative">
                  <img 
                   src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=1632&auto=format&fit=crop" 
-                  alt="Student preparing for competitive exams" 
+                  alt="Group of students collaborating on exam preparation, discussing study materials for NEET and JEE" 
                   className="w-full h-[280px] sm:h-[350px] md:h-[500px] object-cover"
                   loading="lazy"
                   decoding="async"
+                  width={1632}
+                  height={1088}
                  />
                  
                  {/* Floating Overlay Card */}
                  <div className="absolute bottom-4 sm:bottom-6 md:bottom-10 left-0 right-0 px-3 sm:px-4 md:px-6">
                    <div className="bg-pastel-pink/95 backdrop-blur-sm p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl shadow-lg border border-white">
-                      <h4 className="font-bold text-pastel-dark mb-1 text-xs sm:text-sm md:text-base">100% Free Platform</h4>
+                      <h3 className="font-bold text-pastel-dark mb-1 text-xs sm:text-sm md:text-base">100% Free Platform</h3>
                       <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-700 leading-tight">Access all features, practice tests, and AI tools completely free. Start your exam preparation journey today.</p>
                    </div>
                  </div>

@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Header as DashboardHeader } from '@/components/layout/Header';
-import { StudentDashboard, ViewState } from '@/components/student/StudentDashboard';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { Toaster } from '@/components/ui/sonner';
 import { User, Stream, NotebookFolder, Result } from '@/types';
@@ -12,58 +10,73 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { getCartoonAvatar } from '@/utils/avatarUtils';
 import { LandingPage } from './components/landing/LandingPage';
 import { LandingLayout } from './components/landing/LandingLayout';
-import HelpCenter from './components/landing/pages/HelpCenter';
-import ContactUs from './components/landing/pages/ContactUs';
-import FAQ from './components/landing/pages/FAQ';
-import TermsOfService from './components/landing/pages/TermsOfService';
-import PrivacyPolicy from './components/landing/pages/PrivacyPolicy';
-// Help Articles - Getting Started
-import AccountSetup from './components/landing/pages/help/getting-started/AccountSetup';
-import DashboardNavigation from './components/landing/pages/help/getting-started/DashboardNavigation';
-import SelectingStream from './components/landing/pages/help/getting-started/SelectingStream';
-import InterfaceOverview from './components/landing/pages/help/getting-started/InterfaceOverview';
-import ProfileSetup from './components/landing/pages/help/getting-started/ProfileSetup';
-import MobileAccess from './components/landing/pages/help/getting-started/MobileAccess';
-// Help Articles - Practice Tests
-import AttemptingTests from './components/landing/pages/help/practice-tests/AttemptingTests';
-import TestModes from './components/landing/pages/help/practice-tests/TestModes';
-import QuestionPalette from './components/landing/pages/help/practice-tests/QuestionPalette';
-import ReviewingAnswers from './components/landing/pages/help/practice-tests/ReviewingAnswers';
-import PerformanceAnalytics from './components/landing/pages/help/practice-tests/PerformanceAnalytics';
-import PDFReports from './components/landing/pages/help/practice-tests/PDFReports';
-import TestSeries from './components/landing/pages/help/practice-tests/TestSeries';
-import PreviousYearQuestions from './components/landing/pages/help/practice-tests/PreviousYearQuestions';
-// Help Articles - AI Assistant
-import AIAssistantGettingStarted from './components/landing/pages/help/ai-assistant/GettingStarted';
-import ChatHistory from './components/landing/pages/help/ai-assistant/ChatHistory';
-import AskingQuestions from './components/landing/pages/help/ai-assistant/AskingQuestions';
-import ModelSelection from './components/landing/pages/help/ai-assistant/ModelSelection';
-import Attachments from './components/landing/pages/help/ai-assistant/Attachments';
-import SuggestedActions from './components/landing/pages/help/ai-assistant/SuggestedActions';
-// Help Articles - Study Hub
-import YouTubeExtraction from './components/landing/pages/help/study-hub/YouTubeExtraction';
-import PDFProcessing from './components/landing/pages/help/study-hub/PDFProcessing';
-import GeneratingNotes from './components/landing/pages/help/study-hub/GeneratingNotes';
-import Flashcards from './components/landing/pages/help/study-hub/Flashcards';
-import MindMaps from './components/landing/pages/help/study-hub/MindMaps';
-import PracticeQuestions from './components/landing/pages/help/study-hub/PracticeQuestions';
-import LibraryOrganization from './components/landing/pages/help/study-hub/LibraryOrganization';
-// Help Articles - Analytics
-import TestResults from './components/landing/pages/help/analytics/TestResults';
-import SubjectAnalysis from './components/landing/pages/help/analytics/SubjectAnalysis';
-import ProgressTracking from './components/landing/pages/help/analytics/ProgressTracking';
-import WeakAreas from './components/landing/pages/help/analytics/WeakAreas';
-import Statistics from './components/landing/pages/help/analytics/Statistics';
-// Help Articles - Account
-import ProfileUpdates from './components/landing/pages/help/account/ProfileUpdates';
-import AccountSettings from './components/landing/pages/help/account/AccountSettings';
-import PrivacySecurity from './components/landing/pages/help/account/PrivacySecurity';
-import DataManagement from './components/landing/pages/help/account/DataManagement';
-import { LoginPage } from './LoginPage';
 import Squares from '@/components/Squares';
 import { supabase } from './lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { Loader } from './components/shared/Loader';
+
+// Lazy load heavy components for code splitting
+const StudentDashboard = lazy(() => import('@/components/student/StudentDashboard').then(m => ({ default: m.StudentDashboard })));
+const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })));
+
+// Lazy load help pages
+const HelpCenter = lazy(() => import('./components/landing/pages/HelpCenter'));
+const ContactUs = lazy(() => import('./components/landing/pages/ContactUs'));
+const FAQ = lazy(() => import('./components/landing/pages/FAQ'));
+const TermsOfService = lazy(() => import('./components/landing/pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./components/landing/pages/PrivacyPolicy'));
+
+// Lazy load Help Articles - Getting Started
+const AccountSetup = lazy(() => import('./components/landing/pages/help/getting-started/AccountSetup'));
+const DashboardNavigation = lazy(() => import('./components/landing/pages/help/getting-started/DashboardNavigation'));
+const SelectingStream = lazy(() => import('./components/landing/pages/help/getting-started/SelectingStream'));
+const InterfaceOverview = lazy(() => import('./components/landing/pages/help/getting-started/InterfaceOverview'));
+const ProfileSetup = lazy(() => import('./components/landing/pages/help/getting-started/ProfileSetup'));
+const MobileAccess = lazy(() => import('./components/landing/pages/help/getting-started/MobileAccess'));
+
+// Lazy load Help Articles - Practice Tests
+const AttemptingTests = lazy(() => import('./components/landing/pages/help/practice-tests/AttemptingTests'));
+const TestModes = lazy(() => import('./components/landing/pages/help/practice-tests/TestModes'));
+const QuestionPalette = lazy(() => import('./components/landing/pages/help/practice-tests/QuestionPalette'));
+const ReviewingAnswers = lazy(() => import('./components/landing/pages/help/practice-tests/ReviewingAnswers'));
+const PerformanceAnalytics = lazy(() => import('./components/landing/pages/help/practice-tests/PerformanceAnalytics'));
+const PDFReports = lazy(() => import('./components/landing/pages/help/practice-tests/PDFReports'));
+const TestSeries = lazy(() => import('./components/landing/pages/help/practice-tests/TestSeries'));
+const PreviousYearQuestions = lazy(() => import('./components/landing/pages/help/practice-tests/PreviousYearQuestions'));
+
+// Lazy load Help Articles - AI Assistant
+const AIAssistantGettingStarted = lazy(() => import('./components/landing/pages/help/ai-assistant/GettingStarted'));
+const ChatHistory = lazy(() => import('./components/landing/pages/help/ai-assistant/ChatHistory'));
+const AskingQuestions = lazy(() => import('./components/landing/pages/help/ai-assistant/AskingQuestions'));
+const ModelSelection = lazy(() => import('./components/landing/pages/help/ai-assistant/ModelSelection'));
+const Attachments = lazy(() => import('./components/landing/pages/help/ai-assistant/Attachments'));
+const SuggestedActions = lazy(() => import('./components/landing/pages/help/ai-assistant/SuggestedActions'));
+
+// Lazy load Help Articles - Study Hub
+const YouTubeExtraction = lazy(() => import('./components/landing/pages/help/study-hub/YouTubeExtraction'));
+const PDFProcessing = lazy(() => import('./components/landing/pages/help/study-hub/PDFProcessing'));
+const GeneratingNotes = lazy(() => import('./components/landing/pages/help/study-hub/GeneratingNotes'));
+const Flashcards = lazy(() => import('./components/landing/pages/help/study-hub/Flashcards'));
+const MindMaps = lazy(() => import('./components/landing/pages/help/study-hub/MindMaps'));
+const PracticeQuestions = lazy(() => import('./components/landing/pages/help/study-hub/PracticeQuestions'));
+const LibraryOrganization = lazy(() => import('./components/landing/pages/help/study-hub/LibraryOrganization'));
+
+// Lazy load Help Articles - Analytics
+const TestResults = lazy(() => import('./components/landing/pages/help/analytics/TestResults'));
+const SubjectAnalysis = lazy(() => import('./components/landing/pages/help/analytics/SubjectAnalysis'));
+const ProgressTracking = lazy(() => import('./components/landing/pages/help/analytics/ProgressTracking'));
+const WeakAreas = lazy(() => import('./components/landing/pages/help/analytics/WeakAreas'));
+const Statistics = lazy(() => import('./components/landing/pages/help/analytics/Statistics'));
+
+// Lazy load Help Articles - Account
+const ProfileUpdates = lazy(() => import('./components/landing/pages/help/account/ProfileUpdates'));
+const AccountSettings = lazy(() => import('./components/landing/pages/help/account/AccountSettings'));
+const PrivacySecurity = lazy(() => import('./components/landing/pages/help/account/PrivacySecurity'));
+const DataManagement = lazy(() => import('./components/landing/pages/help/account/DataManagement'));
+
+// Import ViewState type
+import type { ViewState } from '@/components/student/StudentDashboard';
 
 const AppContent = () => {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -446,6 +459,7 @@ const AppContent = () => {
         />
       </div>
       <div className="relative z-10 min-h-screen">
+        <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/" element={<LandingPage onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} onSignup={() => navigate('/login')} />} />
           <Route 
@@ -598,6 +612,7 @@ const AppContent = () => {
             }
           />
         </Routes>
+        </Suspense>
         <Toaster />
       </div>
     </div>
