@@ -349,31 +349,34 @@
 
 @media (max-width: 768px) {
   .container { @apply px-4; }
-  
-  /* Accessibility: Minimum touch target sizes (WCAG 2.5.5) */
-  button:not(.no-touch-target),
-  [role="button"]:not(.no-touch-target),
-  a:not(.inline-link):not(.no-touch-target),
-  input[type="checkbox"],
-  input[type="radio"],
-  select {
-    min-height: 48px;
-    min-width: 48px;
-  }
-  
-  /* Ensure clickable areas have adequate spacing */
-  .touch-target {
-    position: relative;
-  }
-  
-  .touch-target::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 48px;
-    min-height: 48px;
+}
+
+/* Accessibility: Touch target helper - creates 48px touch area via pseudo-element */
+/* Apply .touch-target-48 to elements that need larger touch areas without visual changes */
+.touch-target-48 {
+  position: relative;
+}
+
+.touch-target-48::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 48px;
+  min-height: 48px;
+  z-index: 0;
+}
+
+/* Ensure main buttons meet minimum touch targets on mobile */
+@media (max-width: 768px) {
+  /* Primary interactive elements should have min 44px tap targets (48px is ideal) */
+  .landing-cta-btn,
+  nav a,
+  footer a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }
 

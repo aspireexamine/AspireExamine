@@ -215,7 +215,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
                     handleSectionNavigation(link.toLowerCase());
                   }
                 }}
-                className="relative px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300"
+                className="relative px-4 py-3 rounded-full text-sm font-semibold transition-colors duration-300 min-h-[44px] inline-flex items-center"
               >
                 {activeLink === link && (
                   <motion.div
@@ -229,7 +229,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
                     }}
                   />
                 )}
-                <span className={`relative z-10 transition-colors duration-300 ${activeLink === link ? 'text-pastel-purple font-bold' : 'text-gray-600 hover:text-pastel-dark'}`}>
+                <span className={`relative z-10 transition-colors duration-300 ${activeLink === link ? 'text-pastel-purple font-bold' : 'text-gray-700 hover:text-pastel-dark'}`}>
                   {link}
                 </span>
               </a>
@@ -312,7 +312,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onSignup }) => {
                       delay: i * 0.04
                     }}
                     href={link === 'Home' ? '/' : link === 'Contact' ? '/contact' : `#${link.toLowerCase()}`}
-                    className="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors group active:bg-gray-100"
+                    className="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors group active:bg-gray-100 min-h-[48px]"
                     onClick={(e) => {
                       closeMobileMenu();
                       if (link === 'Home') {
