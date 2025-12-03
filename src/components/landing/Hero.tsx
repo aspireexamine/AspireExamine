@@ -42,12 +42,12 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
     ? useTransform(scrollY, [0, 500], [0, -150], { clamp: true })
     : useTransform(scrollY, [0, 500], [0, 0], { clamp: true });
 
-  // Avatar data with initials and colors - no external images needed
+  // Student avatars for trust indicators
   const userAvatars = useMemo(() => [
-    { initial: 'R', bg: 'bg-pastel-pink' },
-    { initial: 'P', bg: 'bg-pastel-lilac' },
-    { initial: 'A', bg: 'bg-pastel-green' },
-    { initial: 'S', bg: 'bg-pastel-yellow' }
+    { id: 1, src: 'https://randomuser.me/api/portraits/thumb/men/32.jpg', name: 'Rahul' },
+    { id: 2, src: 'https://randomuser.me/api/portraits/thumb/women/44.jpg', name: 'Priya' },
+    { id: 3, src: 'https://randomuser.me/api/portraits/thumb/men/67.jpg', name: 'Arjun' },
+    { id: 4, src: 'https://randomuser.me/api/portraits/thumb/women/68.jpg', name: 'Sneha' }
   ], []);
   const stars = useMemo(() => [1, 2, 3, 4, 5], []);
 
@@ -188,13 +188,20 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               className="pt-2 sm:pt-3 md:pt-4 flex items-center justify-center lg:justify-start gap-2 sm:gap-3 px-2 sm:px-0"
             >
               <div className="flex -space-x-1.5 sm:-space-x-2">
-                {userAvatars.map((avatar, idx) => (
+                {userAvatars.map((avatar) => (
                   <div 
-                    key={idx} 
-                    className={`w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border-2 border-cream ${avatar.bg} flex items-center justify-center`}
-                    aria-label={`Student ${avatar.initial} avatar`}
+                    key={avatar.id} 
+                    className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border-2 border-cream bg-gray-200 overflow-hidden"
                   >
-                    <span className="text-[8px] sm:text-[10px] md:text-xs font-bold text-pastel-dark">{avatar.initial}</span>
+                    <img 
+                      src={avatar.src}
+                      alt={`${avatar.name} - AspireExamine student`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      width={50}
+                      height={50}
+                    />
                   </div>
                 ))}
               </div>

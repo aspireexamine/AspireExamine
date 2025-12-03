@@ -6,12 +6,11 @@ interface TestimonialCardProps {
   name: string;
   role: string;
   text: string;
-  initial: string;
-  bgColor: string;
+  image: string;
   align: 'left' | 'right';
 }
 
-const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, initial, bgColor, align }) => (
+const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, image, align }) => (
   <motion.div 
     initial={{ opacity: 0, x: align === 'right' ? 30 : -30 }}
     whileInView={{ opacity: 1, x: 0 }}
@@ -19,12 +18,15 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, ini
     transition={{ duration: 0.4 }}
     className={`bg-white p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start text-center sm:text-left max-w-xl w-full mb-4 sm:mb-6 lg:mb-0 ${align === 'right' ? 'lg:ml-auto' : 'lg:mr-auto'} hover:-translate-y-1 transition-transform duration-300`}
   >
-    <div 
-      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full ${bgColor} border-2 border-pastel-lilac shrink-0 flex items-center justify-center`}
-      aria-label={`${name} avatar`}
-    >
-      <span className="text-lg sm:text-xl font-bold text-pastel-dark">{initial}</span>
-    </div>
+    <img 
+      src={image} 
+      alt={`${name}, ${role} - AspireExamine student testimonial`}
+      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-pastel-lilac shrink-0" 
+      loading="lazy"
+      decoding="async"
+      width={64}
+      height={64}
+    />
     <div>
       <h3 className="font-bold text-pastel-dark text-xs sm:text-sm">{name}</h3>
       <span className="text-[10px] sm:text-xs text-pastel-purple font-semibold mb-1 block">{role}</span>
@@ -43,24 +45,21 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
       name: "Rahul Kumar",
       role: "Class 12th, NEET Aspirant",
       text: "The practice tests are amazing! The AI assistant helped me understand difficult concepts, and I improved my score by 40% in just 3 months. Perfect for my NEET preparation!",
-      initial: "R",
-      bgColor: "bg-pastel-pink",
+      image: "https://randomuser.me/api/portraits/men/32.jpg",
       align: "right" as const
     },
     {
       name: "Priya Sharma",
       role: "Class 11th, JEE Aspirant",
       text: "I love how I can generate study materials from YouTube videos. The Smart Study Hub saved me hours of note-taking. Highly recommended for all JEE students!",
-      initial: "P",
-      bgColor: "bg-pastel-green",
+      image: "https://randomuser.me/api/portraits/women/44.jpg",
       align: "left" as const
     },
     {
       name: "Arjun Patel",
       role: "Class 12th, JEE & NEET",
       text: "The performance analytics helped me identify my weak areas. The platform is completely free and has everything I need for exam preparation. Best study platform ever!",
-      initial: "A",
-      bgColor: "bg-pastel-yellow",
+      image: "https://randomuser.me/api/portraits/men/67.jpg",
       align: "right" as const
     }
   ], []);
