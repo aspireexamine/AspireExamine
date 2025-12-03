@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useMemo, useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { Play, ArrowRight, Star, Zap } from 'lucide-react';
 import Button from './Button';
 
@@ -8,9 +8,39 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
+  const prefersReducedMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  
+  // Detect actual mobile device (not just screen width) for performance optimizations
+  useEffect(() => {
+    const checkMobileDevice = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobileDevice(isMobileUA);
+    };
+    checkMobileDevice();
+  }, []);
+
+  // Detect mobile screen width
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile, { passive: true });
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Conditionally enable scroll animations only on desktop and when motion is not reduced
+  const shouldAnimateScroll = !isMobile && !prefersReducedMotion;
   const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, 200], { clamp: true });
-  const y2 = useTransform(scrollY, [0, 500], [0, -150], { clamp: true });
+  const y1 = shouldAnimateScroll 
+    ? useTransform(scrollY, [0, 500], [0, 200], { clamp: true })
+    : useTransform(scrollY, [0, 500], [0, 0], { clamp: true });
+  const y2 = shouldAnimateScroll
+    ? useTransform(scrollY, [0, 500], [0, -150], { clamp: true })
+    : useTransform(scrollY, [0, 500], [0, 0], { clamp: true });
 
   const userAvatars = useMemo(() => [1, 2, 3, 4], []);
   const stars = useMemo(() => [1, 2, 3, 4, 5], []);
@@ -18,17 +48,39 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
   return (
     <section id="home" className="relative pt-16 pb-8 md:pt-20 md:pb-12 lg:pt-32 lg:pb-20 overflow-hidden bg-cream min-h-[75vh] md:min-h-[85vh] flex items-center">
       
-      {/* Dynamic Background Noise Texture */}
-      <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none z-0" />
+      {/* Dynamic Background Noise Texture - Disabled on mobile for performance */}
+      {!isMobile && (
+        <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none z-0" />
+      )}
 
-      {/* Abstract Background Shapes - Optimized with GPU acceleration */}
+      {/* Abstract Background Shapes - Optimized with reduced blur on mobile devices (even in desktop mode) */}
       <motion.div 
-        style={{ y: y1, willChange: 'transform' }}
-        className="absolute top-0 right-0 w-[150px] sm:w-[250px] md:w-[600px] h-[150px] sm:h-[250px] md:h-[600px] bg-gradient-to-b from-pastel-purple/20 to-pastel-pink/20 rounded-full blur-[30px] sm:blur-[50px] md:blur-[80px] -z-10 mix-blend-multiply"
+        style={{ 
+          y: y1, 
+          willChange: shouldAnimateScroll ? 'transform' : 'auto',
+          transform: 'translateZ(0)' // Force GPU acceleration
+        }}
+        className={`absolute top-0 right-0 w-[150px] sm:w-[250px] md:w-[600px] h-[150px] sm:h-[250px] md:h-[600px] bg-gradient-to-b from-pastel-purple/20 to-pastel-pink/20 rounded-full -z-10 ${
+          isMobileDevice 
+            ? 'blur-[15px]' // Reduced blur on mobile devices (even in desktop mode)
+            : isMobile 
+              ? 'blur-[15px]' 
+              : 'blur-[30px] sm:blur-[50px] md:blur-[80px] mix-blend-multiply'
+        }`}
       />
       <motion.div 
-        style={{ y: y2, willChange: 'transform' }}
-        className="absolute bottom-0 left-0 w-[120px] sm:w-[200px] md:w-[450px] h-[120px] sm:h-[200px] md:h-[450px] bg-gradient-to-t from-pastel-yellow/30 to-pastel-green/20 rounded-full blur-[25px] sm:blur-[40px] md:blur-[60px] -z-10 mix-blend-multiply"
+        style={{ 
+          y: y2, 
+          willChange: shouldAnimateScroll ? 'transform' : 'auto',
+          transform: 'translateZ(0)' // Force GPU acceleration
+        }}
+        className={`absolute bottom-0 left-0 w-[120px] sm:w-[200px] md:w-[450px] h-[120px] sm:h-[200px] md:h-[450px] bg-gradient-to-t from-pastel-yellow/30 to-pastel-green/20 rounded-full -z-10 ${
+          isMobileDevice 
+            ? 'blur-[12px]' // Reduced blur on mobile devices (even in desktop mode)
+            : isMobile 
+              ? 'blur-[12px]' 
+              : 'blur-[25px] sm:blur-[40px] md:blur-[60px] mix-blend-multiply'
+        }`}
       />
 
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 relative z-10">
@@ -39,9 +91,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
             
             {/* Creative Tag */}
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+              initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut" }}
               className="inline-flex items-center gap-1 sm:gap-1.5 pl-1 pr-2.5 sm:pr-3 py-0.5 rounded-full bg-white border border-pastel-dark/10 shadow-sm mx-auto lg:mx-0"
             >
               <span className="bg-pastel-dark text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">New</span>
@@ -50,9 +102,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
 
             {/* Main Headline - Responsive Font Sizes */}
             <motion.div 
-              initial={{ opacity: 0, y: 30 }}
+              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.1, ease: "easeOut" }}
               className="relative"
             >
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-heading font-extrabold leading-[1.1] text-pastel-dark tracking-tighter">
@@ -60,18 +112,20 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                 <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-pastel-purple via-purple-400 to-pink-400 py-0.5">
                   COMPETITIVE
                   <motion.div 
-                    initial={{ width: 0 }}
+                    initial={prefersReducedMotion ? { width: "100%" } : { width: 0 }}
                     animate={{ width: "100%" }}
-                    transition={{ duration: 0.8, delay: 0.5 }}
-                    className="absolute bottom-0 lg:-bottom-1 left-0 h-1 sm:h-1.5 lg:h-2.5 bg-pastel-yellow/60 -z-10 -rotate-1 rounded-full mix-blend-multiply"
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.5 }}
+                    className={`absolute bottom-0 lg:-bottom-1 left-0 h-1 sm:h-1.5 lg:h-2.5 bg-pastel-yellow/60 -z-10 -rotate-1 rounded-full ${
+                      isMobile ? '' : 'mix-blend-multiply'
+                    }`}
                   />
                 </span> <br/>
                 EXAMS WITH <br/>
                 <span className="inline-flex items-center gap-1 sm:gap-1.5 md:gap-3 flex-wrap justify-center lg:justify-start">
                   SMART
                   <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    animate={prefersReducedMotion || isMobile ? {} : { rotate: 360 }}
+                    transition={prefersReducedMotion || isMobile ? {} : { duration: 10, repeat: Infinity, ease: "linear" }}
                     className="w-6 h-6 sm:w-8 sm:h-8 md:w-14 md:h-14 rounded-full border-2 border-pastel-dark border-dashed flex items-center justify-center relative"
                   >
                     <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 bg-pastel-dark rounded-full"></div>
@@ -81,9 +135,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
             </motion.div>
             
             <motion.p 
-              initial={{ opacity: 0 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
               className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 max-w-lg font-medium leading-relaxed mx-auto lg:mx-0 px-2 sm:px-0"
             >
               Master NEET, JEE, and competitive exams with AI-powered practice tests, smart study materials, and personalized learning guidance.
@@ -91,9 +145,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
 
             {/* Action Buttons */}
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5 sm:gap-3 md:gap-4 px-2 sm:px-0"
             >
               <Button 
@@ -122,9 +176,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
 
             {/* Trust Indicators */}
             <motion.div 
-              initial={{ opacity: 0 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.6 }}
               className="pt-2 sm:pt-3 md:pt-4 flex items-center justify-center lg:justify-start gap-2 sm:gap-3 px-2 sm:px-0"
             >
               <div className="flex -space-x-1.5 sm:-space-x-2">
@@ -154,9 +208,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
             
             {/* Main Image Container with Creative Mask */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={prefersReducedMotion ? { scale: 1, opacity: 1 } : { scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut" }}
               className="relative z-10 w-[85%] sm:w-[90%] md:w-[85%] h-[85%] sm:h-[90%] md:h-[85%]"
             >
               <div className="absolute inset-0 bg-pastel-lilac rounded-[24px] sm:rounded-[32px] md:rounded-[48px] rotate-2 sm:rotate-3 translate-x-1.5 sm:translate-x-2.5 md:translate-x-3 translate-y-1.5 sm:translate-y-2.5 md:translate-y-3 border-2 border-pastel-dark"></div>
@@ -168,16 +222,17 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
+                  sizes="(max-width: 640px) 85vw, (max-width: 1024px) 90vw, 85vw"
                 />
                 
                 {/* Gradient Overlay for text readability at bottom */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
 
-              {/* Floating Element 1: Top Left Badge */}
+              {/* Floating Element 1: Top Left Badge - Reduced animation on mobile */}
               <motion.div 
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                animate={prefersReducedMotion || isMobile ? {} : { y: [0, -4, 0] }}
+                transition={prefersReducedMotion || isMobile ? {} : { duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute -top-1.5 -left-1 sm:-top-3 sm:-left-2 md:-top-5 md:-left-5 bg-white border-2 border-pastel-dark p-1.5 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-[3px_3px_0px_0px_rgba(17,17,17,1)] flex items-center gap-1.5 sm:gap-2.5 md:gap-3 max-w-[110px] sm:max-w-[140px] md:max-w-[180px]"
               >
                 <div className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 bg-pastel-pink rounded-full flex items-center justify-center border border-pastel-dark font-bold text-[10px] sm:text-xs md:text-base">A+</div>
@@ -187,10 +242,10 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                 </div>
               </motion.div>
 
-              {/* Floating Element 2: Bottom Right Stats */}
+              {/* Floating Element 2: Bottom Right Stats - Reduced animation on mobile */}
               <motion.div 
-                animate={{ y: [0, 4, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                animate={prefersReducedMotion || isMobile ? {} : { y: [0, 4, 0] }}
+                transition={prefersReducedMotion || isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 className="absolute -bottom-3 -right-1 sm:-bottom-5 sm:-right-2 md:-bottom-7 md:-right-4 bg-pastel-yellow border-2 border-pastel-dark p-1.5 sm:p-2.5 md:p-4 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-[3px_3px_0px_0px_rgba(17,17,17,1)] scale-70 sm:scale-85 md:scale-100 origin-bottom-right"
               >
                  <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 mb-1 sm:mb-1.5">
@@ -199,9 +254,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                  </div>
                  <div className="h-1 sm:h-1.5 md:h-2 w-12 sm:w-20 md:w-28 bg-white rounded-full border border-black overflow-hidden">
                     <motion.div 
-                      initial={{ width: 0 }}
+                      initial={prefersReducedMotion ? { width: "80%" } : { width: 0 }}
                       animate={{ width: "80%" }}
-                      transition={{ duration: 1, delay: 0.5 }}
+                      transition={prefersReducedMotion ? { duration: 0 } : { duration: 1, delay: 0.5 }}
                       className="h-full bg-pastel-purple"
                     />
                  </div>
