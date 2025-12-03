@@ -29,10 +29,12 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ image, category, title, descr
       <div className="relative overflow-hidden rounded-[20px] sm:rounded-[24px] h-48 sm:h-60 mb-4 sm:mb-6">
         <img 
           src={image} 
-          alt={title} 
+          alt={`${title} - ${description.substring(0, 50)}...`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
           loading="lazy"
           decoding="async"
+          width={1470}
+          height={980}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
         <div className="absolute top-3 sm:top-4 left-3 sm:left-4 bg-white/95 backdrop-blur-md px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-sm" style={{ color: accentColor }}>
