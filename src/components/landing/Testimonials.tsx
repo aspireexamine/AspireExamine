@@ -30,7 +30,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, ima
     <div>
       <h3 className="font-bold text-pastel-dark text-xs sm:text-sm">{name}</h3>
       <span className="text-[10px] sm:text-xs text-pastel-purple font-semibold mb-1 block">{role}</span>
-      <p className="text-gray-500 text-[10px] sm:text-xs leading-relaxed">{text}</p>
+      <p className="text-gray-700 text-[10px] sm:text-xs leading-relaxed">{text}</p>
     </div>
   </motion.div>
 );
@@ -45,21 +45,21 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
       name: "Rahul Kumar",
       role: "Class 12th, NEET Aspirant",
       text: "The practice tests are amazing! The AI assistant helped me understand difficult concepts, and I improved my score by 40% in just 3 months. Perfect for my NEET preparation!",
-      image: "https://randomuser.me/api/portraits/men/18.jpg",
+      image: "https://randomuser.me/api/portraits/men/32.jpg",
       align: "right" as const
     },
     {
       name: "Priya Sharma",
       role: "Class 11th, JEE Aspirant",
       text: "I love how I can generate study materials from YouTube videos. The Smart Study Hub saved me hours of note-taking. Highly recommended for all JEE students!",
-      image: "https://randomuser.me/api/portraits/women/28.jpg",
+      image: "https://randomuser.me/api/portraits/women/44.jpg",
       align: "left" as const
     },
     {
       name: "Arjun Patel",
       role: "Class 12th, JEE & NEET",
       text: "The performance analytics helped me identify my weak areas. The platform is completely free and has everything I need for exam preparation. Best study platform ever!",
-      image: "https://randomuser.me/api/portraits/men/22.jpg",
+      image: "https://randomuser.me/api/portraits/men/67.jpg",
       align: "right" as const
     }
   ], []);
@@ -92,7 +92,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-pastel-dark mb-4 sm:mb-6">
               What Our Students Say
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0">
+            <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0">
               Join thousands of students who are acing their competitive exams with AspireExamine. Real success stories from real students.
             </p>
             <Button variant="secondary" onClick={onGetStarted} className="w-full sm:w-auto text-sm sm:text-base !py-2.5 sm:!py-3">Join Now</Button>

@@ -44,7 +44,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ image, category, title, descr
       
       <div className="px-1 sm:px-2 flex flex-col flex-grow">
         <h3 className="text-xl sm:text-2xl font-heading font-bold text-pastel-dark mb-2 sm:mb-3 group-hover:text-pastel-purple transition-colors">{title}</h3>
-        <p className="text-gray-500 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 flex-grow">{description}</p>
+        <p className="text-gray-700 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 flex-grow">{description}</p>
         
         <motion.button 
           whileHover={{ scale: 1.02 }}

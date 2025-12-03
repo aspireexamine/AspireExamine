@@ -42,7 +42,13 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
     ? useTransform(scrollY, [0, 500], [0, -150], { clamp: true })
     : useTransform(scrollY, [0, 500], [0, 0], { clamp: true });
 
-  const userAvatars = useMemo(() => [1, 2, 3, 4], []);
+  // Student avatars for trust indicators
+  const userAvatars = useMemo(() => [
+    { id: 1, src: 'https://randomuser.me/api/portraits/thumb/men/32.jpg', name: 'Rahul' },
+    { id: 2, src: 'https://randomuser.me/api/portraits/thumb/women/44.jpg', name: 'Priya' },
+    { id: 3, src: 'https://randomuser.me/api/portraits/thumb/men/67.jpg', name: 'Arjun' },
+    { id: 4, src: 'https://randomuser.me/api/portraits/thumb/women/68.jpg', name: 'Sneha' }
+  ], []);
   const stars = useMemo(() => [1, 2, 3, 4, 5], []);
 
   return (
@@ -138,7 +144,7 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
-              className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 max-w-lg font-medium leading-relaxed mx-auto lg:mx-0 px-2 sm:px-0"
+              className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-700 max-w-lg font-medium leading-relaxed mx-auto lg:mx-0 px-2 sm:px-0"
             >
               Master NEET, JEE, and competitive exams with AI-powered practice tests, smart study materials, and personalized learning guidance.
             </motion.p>
@@ -165,7 +171,7 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                     featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className="group flex items-center gap-2 sm:gap-3 text-pastel-dark font-bold font-heading transition-all p-1.5 rounded-xl hover:bg-white/50 text-xs sm:text-sm"
+                className="group flex items-center gap-2 sm:gap-3 text-pastel-dark font-bold font-heading transition-all p-2 sm:p-1.5 rounded-xl hover:bg-white/50 text-xs sm:text-sm min-h-[48px]"
               >
                 <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-pastel-dark flex items-center justify-center group-hover:bg-pastel-dark group-hover:text-white transition-colors duration-300">
                   <Play size={12} className="sm:w-4 sm:h-4" fill="currentColor" />
@@ -182,16 +188,19 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               className="pt-2 sm:pt-3 md:pt-4 flex items-center justify-center lg:justify-start gap-2 sm:gap-3 px-2 sm:px-0"
             >
               <div className="flex -space-x-1.5 sm:-space-x-2">
-                {userAvatars.map((i) => (
-                  <div key={i} className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border-2 border-cream bg-gray-200 overflow-hidden">
+                {userAvatars.map((avatar) => (
+                  <div 
+                    key={avatar.id} 
+                    className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border-2 border-cream bg-gray-200 overflow-hidden"
+                  >
                     <img 
-                      src={`https://randomuser.me/api/portraits/men/${i*10 + 5}.jpg`} 
-                      alt={`AspireExamine student ${i} profile picture`}
+                      src={avatar.src}
+                      alt={`${avatar.name} - AspireExamine student`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"
-                      width={36}
-                      height={36}
+                      width={50}
+                      height={50}
                     />
                   </div>
                 ))}
@@ -200,7 +209,7 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                 <div className="flex items-center text-yellow-400 text-[10px] sm:text-xs">
                   {stars.map(s => <Star key={s} size={10} className="sm:w-3 sm:h-3" fill="currentColor" />)}
                 </div>
-                <span className="text-[9px] sm:text-[10px] font-bold text-gray-500">Trusted by 10k+ Aspiring Students</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-gray-700">Trusted by 10k+ Aspiring Students</span>
               </div>
             </motion.div>
           </div>
@@ -218,15 +227,16 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               <div className="absolute inset-0 bg-pastel-lilac rounded-[24px] sm:rounded-[32px] md:rounded-[48px] rotate-2 sm:rotate-3 translate-x-1.5 sm:translate-x-2.5 md:translate-x-3 translate-y-1.5 sm:translate-y-2.5 md:translate-y-3 border-2 border-pastel-dark"></div>
               <div className="absolute inset-0 bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[48px] border-2 border-pastel-dark overflow-hidden shadow-xl relative">
                 <img 
-                  src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1287&auto=format&fit=crop" 
+                  src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=800&auto=format&fit=crop" 
+                  srcSet="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=400&auto=format&fit=crop 400w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1200&auto=format&fit=crop 1200w"
+                  sizes="(max-width: 480px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 50vw, 40vw"
                   alt="Female student with headphones studying at desk with laptop, preparing for NEET and JEE competitive exams" 
                   className="w-full h-full object-cover"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  width={1287}
-                  height={1930}
-                  sizes="(max-width: 640px) 85vw, (max-width: 1024px) 90vw, 85vw"
+                  width={800}
+                  height={1200}
                 />
                 
                 {/* Gradient Overlay for text readability at bottom */}
@@ -242,7 +252,7 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
                 <div className="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 bg-pastel-pink rounded-full flex items-center justify-center border border-pastel-dark font-bold text-[10px] sm:text-xs md:text-base">A+</div>
                 <div>
                   <p className="font-heading font-bold text-[9px] sm:text-[10px] md:text-xs leading-tight">Top Rated</p>
-                  <p className="text-[7px] sm:text-[8px] md:text-[9px] text-gray-500">Best exam prep platform</p>
+                  <p className="text-[7px] sm:text-[8px] md:text-[9px] text-gray-700">Best exam prep platform</p>
                 </div>
               </motion.div>
 

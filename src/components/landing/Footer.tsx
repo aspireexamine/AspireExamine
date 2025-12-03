@@ -57,12 +57,12 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
               <div className="w-5 h-5 sm:w-6 sm:h-6 bg-pastel-lilac rounded flex items-center justify-center border border-black text-[10px] sm:text-xs font-bold">A</div>
               <span className="font-heading font-bold text-base sm:text-lg">AspireExamine</span>
             </Link>
-            <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
+            <p className="text-[10px] sm:text-xs text-gray-700 leading-relaxed">
               Your complete AI-powered platform for competitive exam preparation. Master NEET, JEE, and more.
             </p>
             <div className="flex gap-3 sm:gap-4">
               {socialIcons.map((Icon, i) => (
-                <a key={i} href={socialLinks[i]} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-pastel-purple hover:text-white transition-colors" aria-label={`Social media link ${i + 1}`}>
+                <a key={i} href={socialLinks[i]} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-pastel-purple hover:text-white transition-colors" aria-label={`Social media link ${i + 1}`}>
                   <Icon size={12} className="sm:w-[14px] sm:h-[14px]" />
                 </a>
               ))}
@@ -73,7 +73,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
           <div className="grid grid-cols-2 sm:grid-cols-1 gap-6 sm:gap-8">
               <div>
                 <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Resources</h3>
-                <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
+                <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-700 font-medium">
                   {resourcesLinks.map((link, idx) => (
                     <li key={idx}>
                       <Link to={link.href} className="hover:text-pastel-purple transition-colors">{link.name}</Link>
@@ -84,7 +84,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
 
               <div>
                 <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Support</h3>
-                <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
+                <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-700 font-medium">
                   {supportLinks.map((link, idx) => (
                     <li key={idx}>
                       <Link to={link.href} className="hover:text-pastel-purple transition-colors">{link.name}</Link>
@@ -96,7 +96,7 @@ const Footer: React.FC<FooterProps> = ({ onGetStarted }) => {
 
           <div>
             <h3 className="font-bold text-pastel-dark mb-3 sm:mb-4 md:mb-6 text-sm sm:text-base">Exam Streams</h3>
-            <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-500 font-medium">
+            <ul className="space-y-2 sm:space-y-3 text-[10px] sm:text-xs text-gray-700 font-medium">
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></span> NEET Preparation</li>
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></span> JEE Main & Advanced</li>
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></span> Other Competitive Exams</li>

@@ -30,13 +30,13 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="text-sm sm:text-base md:text-lg font-bold text-gray-500 mb-2 uppercase tracking-wider block">About AspireExamine</span>
+            <span className="text-sm sm:text-base md:text-lg font-bold text-gray-700 mb-2 uppercase tracking-wider block">About AspireExamine</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-pastel-dark mb-4 sm:mb-6 leading-tight">
               YOUR COMPLETE <br/>
               <span className="text-pastel-purple">EXAM PREPARATION</span> <br/>
               PLATFORM
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">
               AspireExamine is an AI-powered educational platform designed specifically for competitive exam preparation. We help students master NEET, JEE, and other competitive exams through comprehensive practice tests, smart study materials, and personalized AI assistance.
             </p>
 
