@@ -38,47 +38,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Optimize chunking for better caching and smaller initial load
-        manualChunks: (id) => {
-          // Core vendor chunks
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor-react';
-          }
-          // Router chunk
-          if (id.includes('node_modules/react-router')) {
-            return 'vendor-router';
-          }
-          // Supabase chunk
-          if (id.includes('node_modules/@supabase')) {
-            return 'vendor-supabase';
-          }
+        manualChunks: {
+          // Keep React together to avoid hook resolution issues
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Supabase
+          'vendor-supabase': ['@supabase/supabase-js'],
           // Animation libraries
-          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
-            return 'vendor-animation';
-          }
-          // UI components (Radix)
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'vendor-ui';
-          }
-          // Charts
-          if (id.includes('node_modules/recharts')) {
-            return 'vendor-charts';
-          }
-          // Three.js / 3D
-          if (id.includes('node_modules/three') || id.includes('node_modules/@react-three')) {
-            return 'vendor-3d';
-          }
-          // PDF processing
-          if (id.includes('node_modules/pdfjs-dist') || id.includes('node_modules/jspdf') || id.includes('node_modules/react-pdf')) {
-            return 'vendor-pdf';
-          }
-          // Markdown
-          if (id.includes('node_modules/react-markdown') || id.includes('node_modules/remark')) {
-            return 'vendor-markdown';
-          }
-          // Other node_modules go to a general vendor chunk
-          if (id.includes('node_modules')) {
-            return 'vendor-common';
-          }
+          'vendor-animation': ['framer-motion', 'motion'],
+          // Charts (lazy loaded anyway)
+          'vendor-charts': ['recharts'],
         },
         // Asset file names with hash for caching
         assetFileNames: (assetInfo) => {
