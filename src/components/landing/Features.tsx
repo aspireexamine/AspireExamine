@@ -17,13 +17,15 @@ interface FeatureCardProps extends CourseCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ image, category, title, description, ctaText, accentColor, delay, onGetStarted }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: isMobile ? 20 : 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay, type: "spring", stiffness: 100, damping: 15 }}
-      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      transition={{ duration: isMobile ? 0.3 : 0.5, delay: isMobile ? 0 : delay, type: isMobile ? "tween" : "spring", stiffness: isMobile ? undefined : 100, damping: isMobile ? undefined : 15 }}
+      whileHover={isMobile ? {} : { y: -8, transition: { duration: 0.2 } }}
       className="bg-white rounded-[24px] sm:rounded-[32px] p-4 sm:p-5 shadow-soft hover:shadow-card border border-gray-100 flex flex-col h-full group"
     >
       <div className="relative overflow-hidden rounded-[20px] sm:rounded-[24px] h-48 sm:h-60 mb-4 sm:mb-6">
@@ -33,8 +35,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ image, category, title, descr
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
           loading="lazy"
           decoding="async"
-          width={1470}
-          height={980}
+          width={600}
+          height={400}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
         <div className="absolute top-3 sm:top-4 left-3 sm:left-4 bg-white/95 backdrop-blur-md px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-sm" style={{ color: accentColor }}>
@@ -47,8 +49,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ image, category, title, descr
         <p className="text-gray-700 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 flex-grow">{description}</p>
         
         <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={isMobile ? {} : { scale: 1.02 }}
+          whileTap={isMobile ? {} : { scale: 0.98 }}
           onClick={onGetStarted}
           className="w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 relative overflow-hidden cursor-pointer"
           style={{ backgroundColor: accentColor, color: '#111' }}
@@ -69,7 +71,7 @@ const Features: React.FC<FeaturesProps> = ({ onGetStarted }) => {
   const features = useMemo(() => [
     {
       category: "AI Learning",
-      image: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1470&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=70&w=600&auto=format&fit=crop",
       title: "AI-Powered Learning",
       description: "Get instant help with your study questions using our advanced AI assistant. Supports multiple AI models for personalized study guidance and content generation.",
       ctaText: "Try AI Assistant",
@@ -77,7 +79,7 @@ const Features: React.FC<FeaturesProps> = ({ onGetStarted }) => {
     },
     {
       category: "Practice Tests",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1470&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=70&w=600&auto=format&fit=crop",
       title: "Comprehensive Practice Tests",
       description: "Access thousands of practice questions for NEET, JEE, and competitive exams. Real-time analytics, performance tracking, and detailed solutions included.",
       ctaText: "Start Practicing",
@@ -85,7 +87,7 @@ const Features: React.FC<FeaturesProps> = ({ onGetStarted }) => {
     },
     {
       category: "Study Hub",
-      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1374&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=70&w=600&auto=format&fit=crop",
       title: "Smart Study Hub",
       description: "Generate study materials from YouTube videos and PDFs. Automatically create notes, flashcards, mind maps, and practice questions to boost your preparation.",
       ctaText: "Explore Study Hub",

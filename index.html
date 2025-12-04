@@ -37,16 +37,22 @@
     <meta name="msapplication-TileColor" content="#DDFCE5" />
     <link rel="canonical" href="https://aspireexamine.com/" />
     
-    <!-- Preconnect for Performance -->
+    <!-- Preconnect for Performance - Critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://images.unsplash.com">
     <link rel="preconnect" href="https://randomuser.me">
     
-    <!-- Preload LCP Hero Image - Optimized for mobile first -->
-    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop" fetchpriority="high" imagesrcset="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1200&auto=format&fit=crop 1200w" imagesizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 40vw">
+    <!-- DNS Prefetch for additional third-party resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+    <link rel="dns-prefetch" href="https://randomuser.me">
     
-    <!-- Consolidated Font Loading - Using display=swap and combining requests -->
+    <!-- Preload LCP Hero Image - Optimized for mobile first -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop" fetchpriority="high" imagesrcset="https://images.unsplash.com/photo-1544717305-2782549b5136?q=70&w=400&auto=format&fit=crop 400w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=85&w=1200&auto=format&fit=crop 1200w" imagesizes="(max-width: 480px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 50vw, 40vw">
+    
+    <!-- Consolidated Font Loading - Non-blocking with display=swap -->
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
   </head>

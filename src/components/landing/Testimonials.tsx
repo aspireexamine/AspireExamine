@@ -10,13 +10,16 @@ interface TestimonialCardProps {
   align: 'left' | 'right';
 }
 
-const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, image, align }) => (
+const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, image, align }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  return (
   <motion.div 
-    initial={{ opacity: 0, x: align === 'right' ? 30 : -30 }}
+    initial={{ opacity: 0, x: isMobile ? 0 : (align === 'right' ? 30 : -30) }}
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true }}
-    transition={{ duration: 0.4 }}
-    className={`bg-white p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start text-center sm:text-left max-w-xl w-full mb-4 sm:mb-6 lg:mb-0 ${align === 'right' ? 'lg:ml-auto' : 'lg:mr-auto'} hover:-translate-y-1 transition-transform duration-300`}
+    transition={{ duration: isMobile ? 0.3 : 0.4, ease: "easeOut" }}
+    className={`bg-white p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start text-center sm:text-left max-w-xl w-full mb-4 sm:mb-6 lg:mb-0 ${align === 'right' ? 'lg:ml-auto' : 'lg:mr-auto'} ${isMobile ? '' : 'hover:-translate-y-1 transition-transform duration-300'}`}
   >
     <img 
       src={image} 
@@ -26,6 +29,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, ima
       decoding="async"
       width={64}
       height={64}
+      fetchPriority="low"
     />
     <div>
       <h3 className="font-bold text-pastel-dark text-xs sm:text-sm">{name}</h3>
@@ -33,7 +37,8 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ name, role, text, ima
       <p className="text-gray-700 text-[10px] sm:text-xs leading-relaxed">{text}</p>
     </div>
   </motion.div>
-);
+  );
+};
 
 interface TestimonialsProps {
   onGetStarted?: () => void;
@@ -87,7 +92,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-pastel-dark mb-4 sm:mb-6">
               What Our Students Say

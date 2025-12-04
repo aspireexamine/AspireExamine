@@ -227,16 +227,16 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
               <div className="absolute inset-0 bg-pastel-lilac rounded-[24px] sm:rounded-[32px] md:rounded-[48px] rotate-2 sm:rotate-3 translate-x-1.5 sm:translate-x-2.5 md:translate-x-3 translate-y-1.5 sm:translate-y-2.5 md:translate-y-3 border-2 border-pastel-dark"></div>
               <div className="absolute inset-0 bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[48px] border-2 border-pastel-dark overflow-hidden shadow-xl relative">
                 <img 
-                  src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=800&auto=format&fit=crop" 
-                  srcSet="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=400&auto=format&fit=crop 400w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1200&auto=format&fit=crop 1200w"
+                  src="https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop" 
+                  srcSet="https://images.unsplash.com/photo-1544717305-2782549b5136?q=70&w=400&auto=format&fit=crop 400w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=75&w=600&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1544717305-2782549b5136?q=85&w=1200&auto=format&fit=crop 1200w"
                   sizes="(max-width: 480px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 50vw, 40vw"
                   alt="Female student with headphones studying at desk with laptop, preparing for NEET and JEE competitive exams" 
                   className="w-full h-full object-cover"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  width={800}
-                  height={1200}
+                  width={600}
+                  height={900}
                 />
                 
                 {/* Gradient Overlay for text readability at bottom */}

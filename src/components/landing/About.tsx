@@ -28,7 +28,7 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <span className="text-sm sm:text-base md:text-lg font-bold text-gray-700 mb-2 uppercase tracking-wider block">About AspireExamine</span>
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-pastel-dark mb-4 sm:mb-6 leading-tight">
@@ -60,7 +60,7 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             {/* Background ZigZag/Shape */}
             <div className="absolute top-0 right-0 w-full h-full bg-pastel-lilac/30 rounded-[30px] sm:rounded-[40px] transform rotate-2 sm:rotate-3 scale-95 -z-10 border-2 border-pastel-dark/5"></div>
@@ -69,13 +69,13 @@ const About: React.FC<AboutProps> = ({ onGetStarted }) => {
                {/* Main Card */}
                <div className="bg-white rounded-t-[30px] sm:rounded-t-[40px] rounded-b-[120px] sm:rounded-b-[150px] md:rounded-t-full md:rounded-b-[200px] overflow-hidden border-[2px] sm:border-[3px] border-pastel-dark shadow-soft max-w-xs sm:max-w-sm md:max-w-md mx-auto relative">
                  <img 
-                  src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=1632&auto=format&fit=crop" 
+                  src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=70&w=600&auto=format&fit=crop" 
                   alt="Group of students collaborating on exam preparation, discussing study materials for NEET and JEE" 
                   className="w-full h-[280px] sm:h-[350px] md:h-[500px] object-cover"
                   loading="lazy"
                   decoding="async"
-                  width={1632}
-                  height={1088}
+                  width={600}
+                  height={400}
                  />
                  
                  {/* Floating Overlay Card */}
