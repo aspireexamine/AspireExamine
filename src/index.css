@@ -372,8 +372,7 @@
 @media (max-width: 768px) {
   /* Primary interactive elements should have min 44px tap targets (48px is ideal) */
   .landing-cta-btn,
-  nav a,
-  footer a {
+  nav a {
     min-height: 44px;
     display: inline-flex;
     align-items: center;

@@ -2,6 +2,26 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Button from './Button';
 
+interface CTABoxProps {
+  onGetStarted?: () => void;
+}
+
+const CTABox: React.FC<CTABoxProps> = ({ onGetStarted }) => (
+  <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-20">
+    <div className="bg-gradient-to-r from-[#D8CFF7] to-[#F7D8E7] rounded-t-[24px] sm:rounded-t-[30px] md:rounded-t-[40px] rounded-b-[40px] sm:rounded-b-[50px] md:rounded-b-[60px] p-6 sm:p-8 md:p-12 lg:p-20 text-center shadow-lg relative overflow-hidden">
+      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-heading font-bold text-white mb-4 sm:mb-6 md:mb-8 drop-shadow-sm leading-tight px-2 uppercase tracking-tight">
+        READY TO ACE YOUR EXAMS? <br className="hidden sm:block"/> START YOUR JOURNEY TODAY
+      </h2>
+      <button 
+        onClick={onGetStarted}
+        className="bg-white text-[#7B68EE] font-heading font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-sm sm:text-base"
+      >
+        Get Started Free
+      </button>
+    </div>
+  </div>
+);
+
 interface TestimonialCardProps {
   name: string;
   role: string;
@@ -70,7 +90,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
   ], []);
 
   return (
-    <section className="py-12 sm:py-16 md:py-24 bg-cream overflow-hidden">
+    <section className="py-12 sm:py-16 md:py-24 bg-cream overflow-visible pb-0">
       <div className="container mx-auto px-4 sm:px-6 md:px-12">
         <div className="flex flex-col-reverse lg:flex-row gap-8 sm:gap-12 lg:gap-16 items-center">
           
@@ -104,6 +124,11 @@ const Testimonials: React.FC<TestimonialsProps> = ({ onGetStarted }) => {
           </motion.div>
 
         </div>
+      </div>
+      
+      {/* CTA Box - positioned to overlap into footer */}
+      <div className="mt-12 sm:mt-16 md:mt-20">
+        <CTABox onGetStarted={onGetStarted} />
       </div>
     </section>
   );
