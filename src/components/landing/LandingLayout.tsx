@@ -79,7 +79,7 @@ export const LandingLayout: React.FC<LandingLayoutProps> = ({
       <main className="flex-grow">
         {children}
       </main>
-      <Footer onGetStarted={onGetStarted} />
+      <Footer />
     </div>
   );
 };

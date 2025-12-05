@@ -59,7 +59,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin,
         <Features onGetStarted={onGetStarted} />
         <Testimonials onGetStarted={onGetStarted} />
       </main>
-      <Footer onGetStarted={onGetStarted} />
+      <Footer />
     </div>
   );
 };
